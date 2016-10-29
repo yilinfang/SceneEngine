@@ -79,10 +79,10 @@ namespace SE {
 
                             ManagedTerrain.ApplyBlock now = q.Dequeue();
 
-                            if (now.TerrainEntity == true)
+                            if (now.TerrainEntity != null)
                                 now.TerrainEntity.transform.localPosition = (
                                     terrain.SEPosition
-                                    + new LongVector3(now.Region.x1, now.StorageTreeRoot.MinHeight, now.Region.y1)
+                                    + now.TerrainPosition
                                     - CoordinateOriginPosition
                                 ).toVector3();
 
@@ -269,7 +269,7 @@ namespace SE {
 
                             //UnityEngine.Debug.Log("Block Scan : (" + now.Region.x1 + "," + now.Region.x2 + "," + now.Region.y1 + "," + now.Region.y2 + ")");
 
-                            if (now.Changed != 0 && now.Key != 0) {
+                            if (now.Key != 0) {
 
                                 if (now.StorageTreeRoot == null) {//空中间节点或未发生改变
 
@@ -279,7 +279,7 @@ namespace SE {
                                         q.Push(now.Child[i]);
                                     }
                                 } else if (now.Key > TerrainPrecisionLimit) {//发生改变
-                                                                             //UnityEngine.Debug.Log("Block Scan : (" + now.Region.x1 + "," + now.Region.x2 + "," + now.Region.y1 + "," + now.Region.y2 + ") Update TerrainEntity");
+                                    //UnityEngine.Debug.Log("Block Scan : (" + now.Region.x1 + "," + now.Region.x2 + "," + now.Region.y1 + "," + now.Region.y2 + ") Update TerrainEntity");
                                     now.ApplyTerrainEntity();
                                     now.Changed = 0;
                                     ReviseCounter++;

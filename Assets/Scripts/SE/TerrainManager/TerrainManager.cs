@@ -42,15 +42,15 @@ namespace SE {
 
             TerrainBlockSplitDepthLimit = 6,//地形块分割限制
 
-            TerrainBlockMergeDepthLimit = 5,//地形块合并限制
+            TerrainBlockMergeDepthLimit = 4,//地形块合并限制
 
-            TerrainCalculateUnitSizeLimit = 500,//地形计算最小规格mm
+            TerrainCalculateUnitSizeLimit = 1000,//地形计算最小规格mm
 
             TerrainBlockSizeLimit = 1000 * 1000;//地形生成最大规格mm
 
         public static int
 
-            TerrainThreadCalculateLimit = 20;
+            TerrainThreadCalculateLimit = 100;
 
         public static float
 
@@ -214,14 +214,13 @@ namespace SE {
                 ymid = (UnitData.Region.y2 + UnitData.Region.y1) / 2;
 
             //注意四个顶点是不需要赋值的
-            Geometries.Point<long, long>[]
-                Points = new Geometries.Point<long, long>[5] {
-                    Node.Map[x + mid, y] = new Geometries.Point<long, long>(xmid, UnitData.Region.y1, UnitData.Map[1]),
-                    Node.Map[x, y + mid] = new Geometries.Point<long, long>(UnitData.Region.x1, ymid, UnitData.Map[3]),
-                    Node.Map[x + mid, y + mid] = new Geometries.Point<long, long>(xmid, ymid, UnitData.Map[4]),
-                    Node.Map[x + len, y + mid] = new Geometries.Point<long, long>(UnitData.Region.x2, ymid, UnitData.Map[5]),
-                    Node.Map[x + mid, y + len] = new Geometries.Point<long, long>(xmid, UnitData.Region.y2, UnitData.Map[7]),
-                };
+            Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[5] {
+                Node.Map[x + mid, y] = new Geometries.Point<long, long>(xmid, UnitData.Region.y1, UnitData.Map[1]),
+                Node.Map[x, y + mid] = new Geometries.Point<long, long>(UnitData.Region.x1, ymid, UnitData.Map[3]),
+                Node.Map[x + mid, y + mid] = new Geometries.Point<long, long>(xmid, ymid, UnitData.Map[4]),
+                Node.Map[x + len, y + mid] = new Geometries.Point<long, long>(UnitData.Region.x2, ymid, UnitData.Map[5]),
+                Node.Map[x + mid, y + len] = new Geometries.Point<long, long>(xmid, UnitData.Region.y2, UnitData.Map[7]),
+            };
 
             TerrainBlockManager.Regist(Node.ManagedTerrainRoot, ref Points);
         }
@@ -325,13 +324,12 @@ namespace SE {
                     ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[3]),
                 };
 
-            return
-                new TerrainUnitData[4] {
-                    new TerrainUnitData(ref ChildRegion[0], ref ChildVertex[0], ref ChildRandomSeed[0], ref ChildImpacts[0]),
-                    new TerrainUnitData(ref ChildRegion[1], ref ChildVertex[1], ref ChildRandomSeed[1], ref ChildImpacts[1]),
-                    new TerrainUnitData(ref ChildRegion[2], ref ChildVertex[2], ref ChildRandomSeed[2], ref ChildImpacts[2]),
-                    new TerrainUnitData(ref ChildRegion[3], ref ChildVertex[3], ref ChildRandomSeed[3], ref ChildImpacts[3]),
-                };
+            return new TerrainUnitData[4] {
+                new TerrainUnitData(ref ChildRegion[0], ref ChildVertex[0], ref ChildRandomSeed[0], ref ChildImpacts[0]),
+                new TerrainUnitData(ref ChildRegion[1], ref ChildVertex[1], ref ChildRandomSeed[1], ref ChildImpacts[1]),
+                new TerrainUnitData(ref ChildRegion[2], ref ChildVertex[2], ref ChildRandomSeed[2], ref ChildImpacts[2]),
+                new TerrainUnitData(ref ChildRegion[3], ref ChildVertex[3], ref ChildRandomSeed[3], ref ChildImpacts[3]),
+            };
         }
 
         private static void UnitCalculate(ManagedTerrain.CalculateNode Node, int x, int y, int len, ref TerrainUnitData UnitData) {
@@ -346,15 +344,15 @@ namespace SE {
 
             UnitDataApplyToNode(ref UnitData, Node, x, y, len);
 
-            TerrainUnitData[] ChildUnitDatas = UnitDataSplit(ref UnitData);
+            TerrainUnitData[] ChildUnitData = UnitDataSplit(ref UnitData);
 
             if (len == 2) {
 
                 //ChildNode生成
-                Node.Child[x, y] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitDatas[0]);
-                Node.Child[x + 1, y] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitDatas[1]);
-                Node.Child[x, y + 1] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitDatas[2]);
-                Node.Child[x + 1, y + 1] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitDatas[3]);
+                Node.Child[x, y] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitData[0]);
+                Node.Child[x + 1, y] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitData[1]);
+                Node.Child[x, y + 1] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitData[2]);
+                Node.Child[x + 1, y + 1] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitData[3]);
                 CalculateNodeUpdate(Node.Child[x, y]);
                 CalculateNodeUpdate(Node.Child[x + 1, y]);
                 CalculateNodeUpdate(Node.Child[x, y + 1]);
@@ -363,73 +361,19 @@ namespace SE {
             } else {
 
                 //继续Unit计算
-                UnitCalculate(Node, x, y, half, ref ChildUnitDatas[0]);
-                UnitCalculate(Node, x + half, y, half, ref ChildUnitDatas[1]);
-                UnitCalculate(Node, x, y + half, half, ref ChildUnitDatas[2]);
-                UnitCalculate(Node, x + half, y + half, half, ref ChildUnitDatas[3]);
+                UnitCalculate(Node, x, y, half, ref ChildUnitData[0]);
+                UnitCalculate(Node, x + half, y, half, ref ChildUnitData[1]);
+                UnitCalculate(Node, x, y + half, half, ref ChildUnitData[2]);
+                UnitCalculate(Node, x + half, y + half, half, ref ChildUnitData[3]);
             }
         }
-
-        /*private static void NodeDestory(ManagedTerrain.CalculateNode Node) {
-
-			//UnityEngine.Debug.Log ("NodeDestory : ("+Node.InitialData.Region.x1+","+Node.InitialData.Region.x2+","+Node.InitialData.Region.y1+","+Node.InitialData.Region.y2+")");
-			System.Threading.Thread.Sleep(250);
-
-			Queue<Pair<Geometries.Square<byte>,Geometries.Rectangle<long>>>
-			    q = new Queue<Pair<Geometries.Square<byte>,Geometries.Rectangle<long>>>();
-
-			q.Enqueue(new Pair<Geometries.Square<byte>,Geometries.Rectangle<long>>(
-				new Geometries.Square<byte>(0,0,16),
-				ref Node.InitialData.Region
-			));
-
-            while (q.Count != 0) {
-
-				Pair<Geometries.Square<byte>,Geometries.Rectangle<long>> now = q.Dequeue();
-
-				if (now.Second.x2 - now.Second.x1 <= TerrainCalculateUnitSizeLimit * 2
-					&& now.Second.y2 - now.Second.y1 <= TerrainCalculateUnitSizeLimit * 2)
-					continue;
-
-                int mid = now.First.Length / 2;
-
-                Geometries.Point<long,long>[]
-                    Points = new Geometries.Point<long, long>[5] {
-					    Node.Map[now.First.x + mid, now.First.y],
-					    Node.Map[now.First.x, now.First.y + mid],
-					    Node.Map[now.First.x + mid, now.First.y + mid],
-					    Node.Map[now.First.x + now.First.Length, now.First.y + mid],
-					    Node.Map[now.First.x + mid, now.First.y + now.First.Length],
-                   };
-
-                TerrainBlockManager.Unregist(Node.ManagedTerrainRoot, ref Points);
-
-				if (now.First.Length != 2) {
-
-					Geometries.Square<byte>[] ChildArrayRegion = Geometries.Split (ref now.First);
-					Geometries.Rectangle<long>[] ChildRegion = Geometries.Split (ref now.Second);
-
-					q.Enqueue(new Pair<Geometries.Square<byte>,Geometries.Rectangle<long>>(ref ChildArrayRegion[0],ref ChildRegion[0]));
-					q.Enqueue(new Pair<Geometries.Square<byte>,Geometries.Rectangle<long>>(ref ChildArrayRegion[1],ref ChildRegion[1]));
-					q.Enqueue(new Pair<Geometries.Square<byte>,Geometries.Rectangle<long>>(ref ChildArrayRegion[2],ref ChildRegion[2]));
-					q.Enqueue(new Pair<Geometries.Square<byte>,Geometries.Rectangle<long>>(ref ChildArrayRegion[3],ref ChildRegion[3]));
-                }
-            }
-
-			Node.Map = null;
-            Node.Child = null;
-
-			//UnityEngine.Debug.Log ("NodeDestory : ("+Node.InitialData.Region.x1+","+Node.InitialData.Region.x2+","+Node.InitialData.Region.y1+","+Node.InitialData.Region.y2+") Finished.");
-        }*/
 
         private static void NodeDestory(ManagedTerrain.CalculateNode Node) {
 
             //UnityEngine.Debug.Log("NodeDestory : (" + Node.InitialData.Region.x1 + "," + Node.InitialData.Region.x2 + "," + Node.InitialData.Region.y1 + "," + Node.InitialData.Region.y2 + ")");
             //System.Threading.Thread.Sleep(250);
 
-            Geometries.Square<byte> ArrayRegion = new Geometries.Square<byte>(0, 0, 16);
-
-            UnitDestory(Node, ref Node.InitialData.Region, ref ArrayRegion);
+            UnitDestory(Node, 0, 0, 16, ref Node.InitialData.Region);
 
             Node.Map = null;
             Node.Child = null;
@@ -437,7 +381,9 @@ namespace SE {
             //UnityEngine.Debug.Log ("NodeDestory : ("+Node.InitialData.Region.x1+","+Node.InitialData.Region.x2+","+Node.InitialData.Region.y1+","+Node.InitialData.Region.y2+") Finished.");
         }
 
-        private static void UnitDestory(ManagedTerrain.CalculateNode Node, ref Geometries.Rectangle<long> Region, ref Geometries.Square<byte> ArrayRegion) {
+        private static void UnitDestory(ManagedTerrain.CalculateNode Node, int x, int y, int len, ref Geometries.Rectangle<long> Region) {
+
+            if (Node.Map == null) return;
 
             if (Region.x2 - Region.x1 <= TerrainCalculateUnitSizeLimit * 2
                 && Region.y2 - Region.y1 <= TerrainCalculateUnitSizeLimit * 2)
@@ -445,39 +391,35 @@ namespace SE {
 
             //UnityEngine.Debug.Log("loop : (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
 
-            int mid = ArrayRegion.Length / 2;
+            int half = len / 2;
 
             Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[5] {
-                Node.Map[ArrayRegion.x + mid, ArrayRegion.y],
-                Node.Map[ArrayRegion.x, ArrayRegion.y + mid],
-                Node.Map[ArrayRegion.x + mid, ArrayRegion.y + mid],
-                Node.Map[ArrayRegion.x + ArrayRegion.Length, ArrayRegion.y + mid],
-                Node.Map[ArrayRegion.x + mid, ArrayRegion.y + ArrayRegion.Length],
+                Node.Map[x + half, y],
+                Node.Map[x, y + half],
+                Node.Map[x + half, y + half],
+                Node.Map[x + len, y + half],
+                Node.Map[x + half, y + len],
             };
 
             TerrainBlockManager.Unregist(Node.ManagedTerrainRoot, ref Points);
 
-            if (ArrayRegion.Length != 2) {
+            if (len == 2) {
+                NodeDestory(Node.Child[x, y]);
+                NodeDestory(Node.Child[x + 1, y]);
+                NodeDestory(Node.Child[x, y + 1]);
+                NodeDestory(Node.Child[x + 1, y + 1]);
 
-                Geometries.Square<byte>[] ChildArrayRegion = Geometries.Split(ref ArrayRegion);
+            } else {
+
                 Geometries.Rectangle<long>[] ChildRegion = Geometries.Split(ref Region);
 
-                UnitDestory(Node, ref ChildRegion[0], ref ChildArrayRegion[0]);
-                UnitDestory(Node, ref ChildRegion[1], ref ChildArrayRegion[1]);
-                UnitDestory(Node, ref ChildRegion[2], ref ChildArrayRegion[2]);
-                UnitDestory(Node, ref ChildRegion[3], ref ChildArrayRegion[3]);
+                UnitDestory(Node, x, y, half, ref ChildRegion[0]);
+                UnitDestory(Node, x + half, y, half, ref ChildRegion[1]);
+                UnitDestory(Node, x, y + half, half, ref ChildRegion[2]);
+                UnitDestory(Node, x + half, y + half, half, ref ChildRegion[3]);
             }
 
             //UnityEngine.Debug.Log ("NodeDestory : ("+Node.InitialData.Region.x1+","+Node.InitialData.Region.x2+","+Node.InitialData.Region.y1+","+Node.InitialData.Region.y2+") Finished.");
-        }
-
-        private static void TreeDestory(ManagedTerrain.CalculateNode Node) {
-
-            for (int i = 0; i < 16; i++)
-                for (int j = 0; j < 16; j++)
-                    if (Node.Child[i, j] != null && Node.Child[i, j].Map != null)
-                        TreeDestory(Node.Child[i, j]);
-            NodeDestory(Node);
         }
 
         public static void _ChangeCoordinateOrigin(LongVector3 CoordinateOriginPosition) {
@@ -600,7 +542,7 @@ namespace SE {
 
                                 //UnityEngine.Debug.Log ("Node Destory : (" + now.InitialData.Region.x1 + "," + now.InitialData.Region.x2 + "," + now.InitialData.Region.y1 + "," + now.InitialData.Region.y2 + ")");
 
-                                TreeDestory(now);
+                                NodeDestory(now);
 
                             }
                         }

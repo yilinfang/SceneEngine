@@ -9,6 +9,14 @@ public class StartSE : MonoBehaviour {
 
         Started = false;
 
+    private static GameObject
+
+        Center;
+
+    private static SE.LongVector3
+
+        Position;
+
     //SE.Objects.A a;
 
     // Use this for initialization
@@ -29,19 +37,18 @@ public class StartSE : MonoBehaviour {
 		    );
         long[]
 		ManagedTerrainVertex = new long[4] { 0, 0, 0, 0, };
-        SE.RandomSeed[]
-            ManagedTerrainRandomSeed = new SE.RandomSeed[5] {
+        SE.RandomSeed[] ManagedTerrainRandomSeed = new SE.RandomSeed[5] {
             new SE.RandomSeed(432885767),
 			new SE.RandomSeed(432885767),
 			new SE.RandomSeed(432885767),
 			new SE.RandomSeed(432885767),
 			new SE.RandomSeed(432885767),
-            };
-        SE.TerrainUnitData.Impact[]
-            ManagedTerrainImpacts = new SE.TerrainUnitData.Impact[2] {
-                new SE.TerrainImpacts.BasicSmooth(),
-			    new SE.TerrainImpacts.BasicRandomAdjust(),
-            };
+        };
+        SE.TerrainUnitData.Impact[] ManagedTerrainImpacts = new SE.TerrainUnitData.Impact[2] {
+            new SE.TerrainImpacts.BasicSmooth(),
+			new SE.TerrainImpacts.BasicRandomAdjust(),
+            //new SE.TerrainImpacts.TestImpactForTerrain(),
+        };
 
         SE.Kernel.RegistRootObject(
             "RootTerrain",
@@ -58,19 +65,25 @@ public class StartSE : MonoBehaviour {
             new Quaternion()
         );
 
-        SE.Thread.Async(delegate () {
-            SE.Kernel.SetTemporarySenceCenter(new SE.LongVector3(0, 0, 0));
-            long x = 0;
-            while (true) {
-                x += 10000;
-                SE.Kernel.SetTemporarySenceCenter(new SE.LongVector3(x, -x, x));
-                System.Threading.Thread.Sleep(1000);
-            }
-        });
+        Center = new GameObject("SceneCenter");
+        Position = new SE.LongVector3(0, 0, 0);
+        SE.Kernel.SetTemporarySenceCenter(Position);
+        Center.transform.localPosition = SE.Kernel.SEPositionToUnityPosition(Position);
+        //yield return new WaitForSeconds(10);
+        //
+        //Position = new SE.LongVector3(1000 * 1000, -1000 * 1000, 1000 * 1000);
+        //SE.Kernel.SetTemporarySenceCenter(Position);
+        //Center.transform.localPosition = SE.Kernel.SEPositionToUnityPosition(Position);
     }
 	
 	// Update is called once per frame
 	void Update () {
+
+        Position += new SE.LongVector3(3000, -3000, 3000);
+
+        SE.Kernel.SetTemporarySenceCenter(Position);
+
+        Center.transform.localPosition = SE.Kernel.SEPositionToUnityPosition(Position);
 
     }
 

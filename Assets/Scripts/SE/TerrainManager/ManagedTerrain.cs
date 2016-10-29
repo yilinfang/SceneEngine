@@ -536,16 +536,20 @@ namespace SE {
                         Stack<Pair<StorageNode, byte>> s = new Stack<Pair<StorageNode, byte>>();
                         s.Push(new Pair<StorageNode, byte>(NodeRoot, 1));
 
+                        byte TempDepth = 0;
+
                         while (s.Count != 0) {
 
                             Pair<StorageNode, byte> now = s.Pop();
 
-                            Depth = System.Math.Max(Depth, now.Second);
+                            TempDepth = (byte)System.Math.Max(TempDepth, now.Second);
 
                             for (int i = 0; i < 4; i++)
                                 if (ChildIsNotNullOrEmpty(now.First, i))
                                     s.Push(new Pair<StorageNode, byte>(now.First.Nodes[i], (byte)(now.Second + 1)));
                         }
+
+                        Depth = System.Math.Min(Depth, TempDepth);
                     }
 
                     public float[,] GetInterPolatedHeightMap(int Size) {
@@ -648,6 +652,8 @@ namespace SE {
 
                 public UnityEngine.GameObject TerrainEntity = null;
 
+                public LongVector3 TerrainPosition;
+
                 public ApplyBlock[] Child = null;
 
                 //------------------------------------------------------------------------------------
@@ -733,7 +739,7 @@ namespace SE {
 						return;
 					}
 
-					//System.Threading.Thread.Sleep (250);
+                    //System.Threading.Thread.Sleep (250);
 
                     //UnityEngine.Debug.Log("ApplyTerrainEntity: (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
 
@@ -743,7 +749,7 @@ namespace SE {
                     UnityEngine.Vector3
                         TerrainDataSize = new LongVector3(
                             Region.x2 - Region.x1,
-                            StorageTreeRoot.MaxHeight-StorageTreeRoot.MinHeight+1,
+                            StorageTreeRoot.MaxHeight - StorageTreeRoot.MinHeight + 1,
                             Region.y2 - Region.y1
                         ).toVector3();
 
@@ -758,7 +764,7 @@ namespace SE {
                     TerrainDataHeightMapDetail=System.Math.Max(32, TerrainDataHeightMapDetail) + 1;
 
                     //get position(Position)
-                    LongVector3 TerrainEntityPosition = new LongVector3(Region.x1, StorageTreeRoot.MinHeight, Region.y1);
+                    TerrainPosition = new LongVector3(Region.x1, StorageTreeRoot.MinHeight, Region.y1);
 
                     //get heightmap(heightmap)
                     float[,] TerrainDataHeightMap = StorageTreeRoot.GetInterPolatedHeightMap(TerrainDataHeightMapDetail);
@@ -773,17 +779,17 @@ namespace SE {
                             TerrainData.baseMapResolution = TerrainDataHeightMapDetail;
                             TerrainData.size = TerrainDataSize;
                             TerrainData.SetHeightsDelayLOD(0, 0, TerrainDataHeightMap);
-
+                            
+                            //先应用再删除
                             UnityEngine.GameObject TempTerrainEntity = TerrainEntity;
+
                             TerrainEntity = UnityEngine.Terrain.CreateTerrainGameObject(TerrainData);
 
                             if (ManagedTerrainRoot.SeparateFromFatherObject == false) {
-
                                 TerrainEntity.transform.parent = ManagedTerrainRoot.UnityRoot.transform;
-                                TerrainEntity.transform.localPosition = TerrainEntityPosition.toVector3();
+                                TerrainEntity.transform.localPosition = TerrainPosition.toVector3();
                             } else {
-
-                                TerrainEntity.transform.localPosition = Kernel.SEPositionToUnityPosition(ManagedTerrainRoot.SEPosition + TerrainEntityPosition);
+                                TerrainEntity.transform.localPosition = Kernel.SEPositionToUnityPosition(ManagedTerrainRoot.SEPosition + TerrainPosition);
                             }
 
                             UnityEngine.Object.Destroy(TempTerrainEntity);
@@ -799,8 +805,9 @@ namespace SE {
 
                     Thread.QueueOnMainThread(
                         delegate () {
-                            UnityEngine.Terrain.Destroy(TerrainEntity);
-                            TerrainEntity = null;
+                            ApplyBlock t = this;
+                            UnityEngine.Terrain.Destroy(t.TerrainEntity);
+                            t.TerrainEntity = null;
                         }
                     );
                 }
