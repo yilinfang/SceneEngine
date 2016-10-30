@@ -117,9 +117,7 @@ namespace SE {
                         : TerrainBlockManagerSceneCenter.GetDistence(Block.CenterAdjust.toVector3() + Block.ManagedTerrainRoot.UnityGlobalPosition),
                     m = d - Block.Range;
 
-                if (m >= Kernel.SceneVisibleRange) {
-                    Block.Key = 0;
-                } else if (m <= Kernel.SceneFullLoadRange + 0.1) {
+                if (m <= Kernel.SceneFullLoadRange + 0.1) {
                     Block.Key = 999999999;
                 } else {
                     Block.Key = (Block.Range / (d - Kernel.SceneFullLoadRange)) * Block.Changed;
@@ -166,8 +164,8 @@ namespace SE {
                 if (Block.StorageTreeRoot == null) {
 
                     long
-                    xmid = (Block.Region.x1 + Block.Region.x2) / 2,
-                    ymid = (Block.Region.y1 + Block.Region.y2) / 2;
+                        xmid = (Block.Region.x1 + Block.Region.x2) / 2,
+                        ymid = (Block.Region.y1 + Block.Region.y2) / 2;
 
                     if (OldPoint.x <= xmid) {
                         if (OldPoint.y <= ymid)
@@ -269,9 +267,9 @@ namespace SE {
 
                             //UnityEngine.Debug.Log("Block Scan : (" + now.Region.x1 + "," + now.Region.x2 + "," + now.Region.y1 + "," + now.Region.y2 + ")");
 
-                            if (now.Key != 0) {
+                            if (now.Changed != 0) {
 
-                                if (now.StorageTreeRoot == null) {//空中间节点或未发生改变
+                                if (now.StorageTreeRoot == null) {//空中间节点
 
                                     for (int i = 0; i < 4; i++) {
 

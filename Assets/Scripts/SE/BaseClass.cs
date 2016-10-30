@@ -113,9 +113,9 @@ namespace SE  {
 
             abstract public class AffectedRegion {
 
-                abstract public bool Overlapped(ref Geometries.Rectangle<long> UnitRegion);
+                abstract public bool OverLapped(ref Geometries.Rectangle<long> UnitRegion);
 
-                abstract public bool OverLapped(ref Geometries.Point<long, long> UnitPoint);
+                abstract public bool OverLapped(long x, long y);
             }
 
             public bool Static = true;

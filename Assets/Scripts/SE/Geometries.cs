@@ -82,5 +82,23 @@ namespace SE {
 				    new Square<byte>(xmid,ymid,Lengthmid),
                 };
         }
+
+        public static bool OverLapped(Rectangle<long> a, Rectangle<long> b) {
+
+            if (((a.x1 <= b.x1 && b.x1 <= a.x2) || (a.x1 <= b.x2 && b.x2 <= a.x2))
+                && ((a.y1 <= b.y1 && b.y1 <= a.y2) || (a.y1 <= b.y2 && b.y2 <= a.y2)))
+                return true;
+            else if (((b.x1 <= a.x1 && a.x1 <= b.x2) || (b.x1 <= a.x2 && a.x2 <= b.x2))
+                && ((b.y1 <= a.y1 && a.y1 <= b.y2) || (b.y1 <= a.y2 && a.y2 <= b.y2)))
+                return true;
+            return false;
+        }
+        public static bool OverLapped(Rectangle<long> a, long x, long y) {
+
+            if (a.x1 <= x && x <= a.x2 && a.y1 <= y && y <= a.y2)
+                return true;
+            else
+                return false;
+        }
     }
 }

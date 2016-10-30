@@ -47,25 +47,25 @@ namespace SE {
 
                     private static class BitCounter {
                         public static void Increase(ref uint Counter, int Index) {
-							if (BitBool.Get (Counter, Index * 2)) {
-								//if (BitBool.Get (Counter, Index * 2 + 1))
-								//	UnityEngine.Debug.Log ("BitCounter Increase "+Index+": Counter is full.");
-								//else
-									BitBool.SetTrue (ref Counter, Index * 2 + 1);
-							} else
-								BitBool.SetTrue (ref Counter, Index * 2);
-						}
+                            if (BitBool.Get(Counter, Index * 2)) {
+                                if (BitBool.Get(Counter, Index * 2 + 1))
+                                    throw new System.Exception("BitCounter Increase " + Index + ": Counter is full.");
+                                else
+                                    BitBool.SetTrue(ref Counter, Index * 2 + 1);
+                            } else
+                                BitBool.SetTrue(ref Counter, Index * 2);
+                        }
                         public static void Decrease(ref uint Counter, int Index) {
-							if (BitBool.Get (Counter, Index * 2 + 1))
-								BitBool.SetFalse (ref Counter, Index * 2 + 1);
-							else {
-								//if (BitBool.Get (Counter, Index * 2))
-									BitBool.SetFalse (ref Counter, Index * 2);
-								//else
-								//	UnityEngine.Debug.Log ("BitCounter Decrease "+Index+": Counter is Empty.");
-							}
-							//if (GetInt (Counter, Index) == 0)
-							//	UnityEngine.Debug.Log ("The Counter is decreased to 0.");
+                            if (BitBool.Get(Counter, Index * 2 + 1))
+                                BitBool.SetFalse(ref Counter, Index * 2 + 1);
+                            else {
+                                if (BitBool.Get(Counter, Index * 2))
+                                    BitBool.SetFalse(ref Counter, Index * 2);
+                                else
+                                    throw new System.Exception("BitCounter Decrease " + Index + ": Counter is Empty.");
+                            }
+                            //if (GetInt (Counter, Index) == 0)
+                            //	UnityEngine.Debug.Log ("The Counter is decreased to 0.");
                         }
                         public static bool IsNotZero(uint Counter, int Index) {
                             return BitBool.Get(Counter, Index * 2);
@@ -76,10 +76,10 @@ namespace SE {
                         public static void SetInt(ref uint Counter, int Index, int Value) {
                             if (Value != 0) {
                                 BitBool.SetTrue(ref Counter, Index * 2);
-								if (Value == 2)
-									BitBool.SetTrue (ref Counter, Index * 2 + 1);
-								else if (Value != 1)
-									throw new System.Exception ("Storage Tree BitCounter SetInt : Out of Range (0-2)");
+                                if (Value == 2)
+                                    BitBool.SetTrue(ref Counter, Index * 2 + 1);
+                                else if (Value != 1)
+                                    throw new System.Exception("Storage Tree BitCounter SetInt : Out of Range (0-2)");
                             }
                         }
                         public static uint Init(int[] Values) {
@@ -321,10 +321,8 @@ namespace SE {
                                 VertexHeight[3] = NewPoint.h;
                             }
                         }
+
 						if (!Inserted) {
-
-							int TempDepth = 0;
-
 							Queue<Group<StorageNode, Geometries.Rectangle<long>, int>>
 							    q = new Queue<Group<StorageNode, Geometries.Rectangle<long>, int>>();
 							q.Enqueue (new Group<StorageNode, Geometries.Rectangle<long>, int> (NodeRoot, ref Region, 1));
@@ -336,11 +334,11 @@ namespace SE {
                                 //if (NewPoint.x == 953 && NewPoint.y == 61035)
                                 //    UnityEngine.Debug.Log("Loop : (" + now.Second.x1 + "," + now.Second.x2 + "," + now.Second.y1 + "," + now.Second.y2 + ")");
 
-                                TempDepth = System.Math.Max (TempDepth, now.Third);
+                                Depth = System.Math.Max (Depth, now.Third);
 
 								long
-								xmid = (now.Second.x1 + now.Second.x2) / 2,
-								ymid = (now.Second.y1 + now.Second.y2) / 2;
+                                    xmid = (now.Second.x1 + now.Second.x2) / 2,
+                                    ymid = (now.Second.y1 + now.Second.y2) / 2;
 
 								//判断当前节点是否能够存储(是则结束该分支)
 								if (NewPoint.x == xmid) {
@@ -398,8 +396,6 @@ namespace SE {
 									}
 								}
 							}
-
-							Depth = System.Math.Max(Depth, TempDepth);
 						}
 
                         if (!Inserted)
@@ -424,19 +420,6 @@ namespace SE {
 
                         return true;
 					}
-                    private static bool NodeIsNotNullOrEmpty(StorageNode Node) {
-
-                        if (Node == null) return false;
-
-                        for (int i = 0; i < 4; i++)
-                            if (ChildIsNotNullOrEmpty(Node, i))
-                                return true;
-
-                        if (Node.Counter == 0)
-                            return false;
-
-                        return true;
-                    }
 
                     public void Delete(Geometries.Point<long, long> OldPoint) {
 
@@ -461,7 +444,6 @@ namespace SE {
                         }
 
 						if (!Deleted) {
-
 							Queue<Pair<StorageNode, Geometries.Rectangle<long>>>
 							    q = new Queue<Pair<StorageNode, Geometries.Rectangle<long>>>();
 							q.Enqueue (new Pair<StorageNode, Geometries.Rectangle<long>> (NodeRoot, ref Region));
@@ -604,21 +586,21 @@ namespace SE {
                                 xmid = x1 + now.Second.Length / 2,
                                 ymid = y1 + now.Second.Length / 2;
 
-                            if (NodeIsNotNullOrEmpty(now.First)) {
+                            if (now.First != null) {
 
                                 //填充已知点高度并继续分割
                                 StorageNode node = now.First;
 
                                 map[y1, xmid] = BitCounter.IsNotZero(node.Counter, 0) ?
-                                    (float)(node.Height[0] - MinHeight) / HeightRange : (map [y1, x1] + map [y1, x2]) / 2;
+                                    (float)(node.Height[0] - MinHeight) / HeightRange : 0;//(map [y1, x1] + map [y1, x2]) / 2;
                                 map[ymid, x1] = BitCounter.IsNotZero(node.Counter, 1) ?
-                                    (float)(node.Height[1] - MinHeight) / HeightRange : (map [y1, x1] + map [y2, x1]) / 2;
+                                    (float)(node.Height[1] - MinHeight) / HeightRange : 0;//(map [y1, x1] + map [y2, x1]) / 2;
                                 map[ymid, xmid] = BitCounter.IsNotZero(node.Counter, 2) ?
-                                    (float)(node.Height[2] - MinHeight) / HeightRange : (map [y1, x1] + map [y1, x2] + map [y2, x1] + map [y2, x2]) / 4;
+                                    (float)(node.Height[2] - MinHeight) / HeightRange : 0;//(map [y1, x1] + map [y1, x2] + map [y2, x1] + map [y2, x2]) / 4;
                                 map[ymid, x2] = BitCounter.IsNotZero(node.Counter, 3) ?
-                                    (float)(node.Height[3] - MinHeight) / HeightRange : (map [y1, x2] + map [y2, x2]) / 2;
+                                    (float)(node.Height[3] - MinHeight) / HeightRange : 0;//(map [y1, x2] + map [y2, x2]) / 2;
                                 map[y2, xmid] = BitCounter.IsNotZero(node.Counter, 4) ?
-                                    (float)(node.Height[4] - MinHeight) / HeightRange : (map [y2, x1] + map [y2, x2]) / 2;
+                                    (float)(node.Height[4] - MinHeight) / HeightRange : 0;//(map [y2, x1] + map [y2, x2]) / 2;
 
                                 if (now.Second.Length != 2) {
 
@@ -633,14 +615,14 @@ namespace SE {
 
                                 float SqrOfArrayLength = now.Second.Length * now.Second.Length;
 
-                                for (int i = x1; i <= x2; i++)
+                                /*for (int i = x1; i <= x2; i++)
                                     for (int j = y1; j <= y2; j++)
                                         map[j, i] = (//对每个空白点进行插值计算
                                             map[y1, x1] * (x2 - i) * (y2 - j)
                                             + map[y1, x2] * (i - x1) * (y2 - j)
                                             + map[y2, x1] * (x2 - i) * (j - y1)
                                             + map[y2, x2] * (i - x1) * (j - y1)
-                                        ) / SqrOfArrayLength;
+                                        ) / SqrOfArrayLength;*/
                             }
                         }
 

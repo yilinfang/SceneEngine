@@ -44,7 +44,7 @@ namespace SE {
 
             TerrainBlockMergeDepthLimit = 4,//地形块合并限制
 
-            TerrainCalculateUnitSizeLimit = 1000,//地形计算最小规格mm
+            TerrainCalculateUnitSizeLimit = 500,//地形计算最小规格mm
 
             TerrainBlockSizeLimit = 1000 * 1000;//地形生成最大规格mm
 
@@ -54,7 +54,7 @@ namespace SE {
 
         public static float
 
-            TerrainPrecisionLimit = 0.1F;//地形加载精度限制
+            TerrainPrecisionLimit = 0.01F;//地形加载精度限制
 
         private static int
 
@@ -230,12 +230,14 @@ namespace SE {
             List<TerrainUnitData.Impact> list = new List<TerrainUnitData.Impact>();
 
             for (int i = 0; i < Impacts.Length; i++)
-                if (Impacts[i].Region.Overlapped(ref Region)) {
+                if (Impacts[i].Region.OverLapped(ref Region)) {
                     if (Impacts[i].Static)
                         list.Add(Impacts[i]);
                     else
                         list.Add(Impacts[i].Clone(i, ref Region));
-                }
+                }// else {
+                //    UnityEngine.Debug.Log("Not Affected : (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
+                //}
 
             return list.ToArray();
         }
@@ -258,8 +260,8 @@ namespace SE {
 
             Geometries.Rectangle<long>[]
                 ChildRegion = Geometries.Split(ref UnitData.Region);
-            long[][]
-                ChildVertex = new long[4][] {
+
+            long[][] ChildVertex = new long[4][] {
                     new long[4] {
                         UnitData.Map[0],
                         UnitData.Map[1],
@@ -285,44 +287,44 @@ namespace SE {
                         UnitData.Map[8],
                     },
                 };
-            RandomSeed[][]
-                ChildRandomSeed = new RandomSeed[4][] {
-                    new RandomSeed[5] {
-                        UnitData.Seed[0].GetRandomSeed(111111),
-                        UnitData.Seed[1].GetRandomSeed(1111),
-                        UnitData.Seed[2].GetRandomSeed(1111),
-                        UnitData.Seed[0].GetRandomSeed(1111),
-                        UnitData.Seed[0].GetRandomSeed(2222),
-                    },
-                    new RandomSeed[5] {
-                        UnitData.Seed[0].GetRandomSeed(222222),
-                        UnitData.Seed[1].GetRandomSeed(2222),
-                        UnitData.Seed[0].GetRandomSeed(1111),
-                        UnitData.Seed[3].GetRandomSeed(1111),
-                        UnitData.Seed[0].GetRandomSeed(3333),
-                    },
-                    new RandomSeed[5] {
-                        UnitData.Seed[0].GetRandomSeed(333333),
-                        UnitData.Seed[0].GetRandomSeed(2222),
-                        UnitData.Seed[2].GetRandomSeed(2222),
-                        UnitData.Seed[0].GetRandomSeed(4444),
-                        UnitData.Seed[4].GetRandomSeed(1111),
-                    },
-                    new RandomSeed[5] {
-                        UnitData.Seed[0].GetRandomSeed(444444),
-                        UnitData.Seed[0].GetRandomSeed(3333),
-                        UnitData.Seed[0].GetRandomSeed(4444),
-                        UnitData.Seed[3].GetRandomSeed(2222),
-                        UnitData.Seed[4].GetRandomSeed(2222),
-                    },
-                };
-            TerrainUnitData.Impact[][]
-                ChildImpacts = new TerrainUnitData.Impact[4][] {
-                    ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[0]),
-                    ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[1]),
-                    ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[2]),
-                    ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[3]),
-                };
+
+            RandomSeed[][] ChildRandomSeed = new RandomSeed[4][] {
+                new RandomSeed[5] {
+                    UnitData.Seed[0].GetRandomSeed(111111),
+                    UnitData.Seed[1].GetRandomSeed(1111),
+                    UnitData.Seed[2].GetRandomSeed(1111),
+                    UnitData.Seed[0].GetRandomSeed(1111),
+                    UnitData.Seed[0].GetRandomSeed(2222),
+                },
+                new RandomSeed[5] {
+                    UnitData.Seed[0].GetRandomSeed(222222),
+                    UnitData.Seed[1].GetRandomSeed(2222),
+                    UnitData.Seed[0].GetRandomSeed(1111),
+                    UnitData.Seed[3].GetRandomSeed(1111),
+                    UnitData.Seed[0].GetRandomSeed(3333),
+                },
+                new RandomSeed[5] {
+                    UnitData.Seed[0].GetRandomSeed(333333),
+                    UnitData.Seed[0].GetRandomSeed(2222),
+                    UnitData.Seed[2].GetRandomSeed(2222),
+                    UnitData.Seed[0].GetRandomSeed(4444),
+                    UnitData.Seed[4].GetRandomSeed(1111),
+                },
+                new RandomSeed[5] {
+                    UnitData.Seed[0].GetRandomSeed(444444),
+                    UnitData.Seed[0].GetRandomSeed(3333),
+                    UnitData.Seed[0].GetRandomSeed(4444),
+                    UnitData.Seed[3].GetRandomSeed(2222),
+                    UnitData.Seed[4].GetRandomSeed(2222),
+                },
+            };
+
+            TerrainUnitData.Impact[][] ChildImpacts = new TerrainUnitData.Impact[4][] {
+                ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[0]),
+                ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[1]),
+                ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[2]),
+                ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[3]),
+            };
 
             return new TerrainUnitData[4] {
                 new TerrainUnitData(ref ChildRegion[0], ref ChildVertex[0], ref ChildRandomSeed[0], ref ChildImpacts[0]),
@@ -373,6 +375,8 @@ namespace SE {
             //UnityEngine.Debug.Log("NodeDestory : (" + Node.InitialData.Region.x1 + "," + Node.InitialData.Region.x2 + "," + Node.InitialData.Region.y1 + "," + Node.InitialData.Region.y2 + ")");
             //System.Threading.Thread.Sleep(250);
 
+            if (Node.Map == null) return;
+
             UnitDestory(Node, 0, 0, 16, ref Node.InitialData.Region);
 
             Node.Map = null;
@@ -382,8 +386,6 @@ namespace SE {
         }
 
         private static void UnitDestory(ManagedTerrain.CalculateNode Node, int x, int y, int len, ref Geometries.Rectangle<long> Region) {
-
-            if (Node.Map == null) return;
 
             if (Region.x2 - Region.x1 <= TerrainCalculateUnitSizeLimit * 2
                 && Region.y2 - Region.y1 <= TerrainCalculateUnitSizeLimit * 2)

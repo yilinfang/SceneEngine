@@ -3,22 +3,22 @@
 namespace SE {
     public struct RandomSeed {
 
-        private long 
+        private ulong 
             a,
             b;
 
-        public RandomSeed(long Seed) {
+        public RandomSeed(ulong Seed) {
             a = b = Seed;
         }
 
-        public long NextRandomNum() {
+        public ulong NextRandomNum() {
             return b = (214013 * b + 2531011);
         }
-        public long NextRandomNum(long Top) {
+        public ulong NextRandomNum(ulong Top) {
             return b = (214013 * b + 2531011) % Top;
         }
 
-        public RandomSeed GetRandomSeed(long RandNum) {
+        public RandomSeed GetRandomSeed(ulong RandNum) {
             return new RandomSeed(214013 * (b * RandNum) + 2531011);
         }
 
