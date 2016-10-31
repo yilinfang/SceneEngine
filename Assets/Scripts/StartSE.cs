@@ -34,11 +34,11 @@ public class StartSE : MonoBehaviour {
             0, 1000 * 1000 * 1000,
             0, 1000 * 1000 * 1000
         ), LiftWholeRegion = new SE.Geometries.Rectangle<long>(
-            15 * 1000, 85 * 1000,
-            15 * 1000, 85 * 1000
+            15 * 1000, 850 * 1000,
+            15 * 1000, 850 * 1000
         ), LiftCentralRegion = new SE.Geometries.Rectangle<long>(
-            30 * 1000, 70 * 1000,
-            30 * 1000, 70 * 1000
+            30 * 1000, 700 * 1000,
+            30 * 1000, 700 * 1000
         );
 
         long[] ManagedTerrainVertex = new long[4] { 0, 1000 * 1000, 1000 * 1000, 0, };
@@ -55,7 +55,8 @@ public class StartSE : MonoBehaviour {
             new SE.TerrainImpacts.BasicSmooth(),
             new SE.TerrainImpacts.BasicRandomAdjust(),
             new SE.TerrainImpacts.BasicToExtend(),
-            new SE.TerrainImpacts.SmoothPlane(LiftWholeRegion, LiftCentralRegion, 30 * 1000),
+            //new SE.TerrainImpacts.SmoothPlane(LiftWholeRegion, LiftCentralRegion, 30 * 1000),
+            new SE.TerrainImpacts.GenerateSmoothPlane(),
             //new SE.TerrainImpacts.TestImpactForTerrain(),
         };
 
@@ -80,21 +81,10 @@ public class StartSE : MonoBehaviour {
         //SE.Kernel.SetTemporarySenceCenter(Position);
         //Center.transform.localPosition = SE.Kernel.SEPositionToUnityPosition(Position);
         //yield return new WaitForSeconds(10);
-        //
+
         //Position = new SE.LongVector3(1000 * 1000, -1000 * 1000, 1000 * 1000);
         //SE.Kernel.SetTemporarySenceCenter(Position);
         //Center.transform.localPosition = SE.Kernel.SEPositionToUnityPosition(Position);
-    }
-	
-	// Update is called once per frame
-	void Update () {
-
-        //Position += new SE.LongVector3(50000, 0, 50000);
-
-        SE.Kernel.SetTemporarySenceCenter(SE.Kernel.UnityPositionToSEPosition(transform.position));
-
-        //Center.transform.localPosition = SE.Kernel.SEPositionToUnityPosition(Position);
-
     }
 
 	~StartSE() {
