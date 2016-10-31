@@ -122,7 +122,7 @@ namespace SE  {
 
             public AffectedRegion Region;
 
-            abstract public void Main(TerrainUnitData Data);
+            abstract public void Main(ref TerrainUnitData Data);
 
             virtual public Impact Clone(int Index, ref Geometries.Rectangle<long> Region) { throw new NotImplementedException(); }
 
@@ -142,7 +142,8 @@ namespace SE  {
             }
         }
 
-        public long[] Map;
+        public long[] BaseMap;
+        public long[] ExtendMap;
 
         public RandomSeed[] Seed;
 
@@ -150,19 +151,28 @@ namespace SE  {
 
         public Impact[] Impacts;
 
-        public TerrainUnitData(ref Geometries.Rectangle<long> Region, ref long[] VertexHeight,
+        public TerrainUnitData(ref Geometries.Rectangle<long> Region, ref long[] BaseVertex, ref long[] ExtendVertex,
             ref RandomSeed[] Seed, ref Impact[] Impacts) {
 
             this.Region = Region;
 
-            Map = new long[9] {
-                VertexHeight[0],
+            BaseMap = new long[9] {
+                BaseVertex[0],
                 0,
-                VertexHeight[1],
+                BaseVertex[1],
                 0,0,0,
-                VertexHeight[2],
+                BaseVertex[2],
                 0,
-                VertexHeight[3],
+                BaseVertex[3],
+            };
+            ExtendMap = new long[9] {
+                ExtendVertex[0],
+                0,
+                ExtendVertex[1],
+                0,0,0,
+                ExtendVertex[2],
+                0,
+                ExtendVertex[3],
             };
 
             this.Seed = Seed;
@@ -174,7 +184,8 @@ namespace SE  {
             Region = Data.Region;
 
             //struct array
-            Map = (long[])Data.Map.Clone();
+            BaseMap = (long[])Data.BaseMap.Clone();
+            ExtendMap = (long[])Data.ExtendMap.Clone();
 
             Seed = (RandomSeed[])Data.Seed.Clone();
 

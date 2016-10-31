@@ -30,13 +30,13 @@ namespace SE {
                     this.InitialData = InitialData;
 
                     MaxHeight = System.Math.Max(
-                        System.Math.Max(InitialData.Map[0], InitialData.Map[2]),
-                        System.Math.Max(InitialData.Map[6], InitialData.Map[8])
+                        System.Math.Max(InitialData.BaseMap[0], InitialData.BaseMap[2]),
+                        System.Math.Max(InitialData.BaseMap[6], InitialData.BaseMap[8])
                     );
 
                     MinHeight = System.Math.Min(
-                        System.Math.Min(InitialData.Map[0], InitialData.Map[2]),
-                        System.Math.Min(InitialData.Map[6], InitialData.Map[8])
+                        System.Math.Min(InitialData.BaseMap[0], InitialData.BaseMap[2]),
+                        System.Math.Min(InitialData.BaseMap[6], InitialData.BaseMap[8])
                     );
                 }
             }
@@ -592,15 +592,15 @@ namespace SE {
                                 StorageNode node = now.First;
 
                                 map[y1, xmid] = BitCounter.IsNotZero(node.Counter, 0) ?
-                                    (float)(node.Height[0] - MinHeight) / HeightRange : 0;//(map [y1, x1] + map [y1, x2]) / 2;
+                                    (float)(node.Height[0] - MinHeight) / HeightRange : (map [y1, x1] + map [y1, x2]) / 2;
                                 map[ymid, x1] = BitCounter.IsNotZero(node.Counter, 1) ?
-                                    (float)(node.Height[1] - MinHeight) / HeightRange : 0;//(map [y1, x1] + map [y2, x1]) / 2;
+                                    (float)(node.Height[1] - MinHeight) / HeightRange : (map [y1, x1] + map [y2, x1]) / 2;
                                 map[ymid, xmid] = BitCounter.IsNotZero(node.Counter, 2) ?
-                                    (float)(node.Height[2] - MinHeight) / HeightRange : 0;//(map [y1, x1] + map [y1, x2] + map [y2, x1] + map [y2, x2]) / 4;
+                                    (float)(node.Height[2] - MinHeight) / HeightRange : (map [y1, x1] + map [y1, x2] + map [y2, x1] + map [y2, x2]) / 4;
                                 map[ymid, x2] = BitCounter.IsNotZero(node.Counter, 3) ?
-                                    (float)(node.Height[3] - MinHeight) / HeightRange : 0;//(map [y1, x2] + map [y2, x2]) / 2;
+                                    (float)(node.Height[3] - MinHeight) / HeightRange : (map [y1, x2] + map [y2, x2]) / 2;
                                 map[y2, xmid] = BitCounter.IsNotZero(node.Counter, 4) ?
-                                    (float)(node.Height[4] - MinHeight) / HeightRange : 0;//(map [y2, x1] + map [y2, x2]) / 2;
+                                    (float)(node.Height[4] - MinHeight) / HeightRange : (map [y2, x1] + map [y2, x2]) / 2;
 
                                 if (now.Second.Length != 2) {
 
@@ -615,14 +615,14 @@ namespace SE {
 
                                 float SqrOfArrayLength = now.Second.Length * now.Second.Length;
 
-                                /*for (int i = x1; i <= x2; i++)
+                                for (int i = x1; i <= x2; i++)
                                     for (int j = y1; j <= y2; j++)
                                         map[j, i] = (//对每个空白点进行插值计算
                                             map[y1, x1] * (x2 - i) * (y2 - j)
                                             + map[y1, x2] * (i - x1) * (y2 - j)
                                             + map[y2, x1] * (x2 - i) * (j - y1)
                                             + map[y2, x2] * (i - x1) * (j - y1)
-                                        ) / SqrOfArrayLength;*/
+                                        ) / SqrOfArrayLength;
                             }
                         }
 
@@ -670,7 +670,7 @@ namespace SE {
 
                 public void Split() {
 
-					UnityEngine.Debug.Log ("ApplyBlock : Split (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
+					//UnityEngine.Debug.Log ("ApplyBlock : Split (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
 
                     Geometries.Rectangle<long>[]
                         ChildRegion = Geometries.Split(ref Region);
@@ -692,7 +692,7 @@ namespace SE {
 
                 public void Merge() {
 					//System.Threading.Thread.Sleep (1000);
-					UnityEngine.Debug.Log ("ApplyBlock : Merge (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
+					//UnityEngine.Debug.Log ("ApplyBlock : Merge (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
 
 					//UnityEngine.Debug.Log("ApplyBlock : Merge " +Child[0].StorageTreeRoot.Depth+","+Child[1].StorageTreeRoot.Depth+","+Child[2].StorageTreeRoot.Depth+","+Child[3].StorageTreeRoot.Depth);
                     StorageTreeRoot = StorageTree.Merge(new StorageTree[4] {

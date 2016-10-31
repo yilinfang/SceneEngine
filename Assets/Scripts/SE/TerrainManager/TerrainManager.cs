@@ -40,21 +40,22 @@ namespace SE {
 
         public static long
 
-            TerrainBlockSplitDepthLimit = 6,//地形块分割限制
+            TerrainBlockSplitDepthLimit = 5,//地形块分割限制
 
             TerrainBlockMergeDepthLimit = 4,//地形块合并限制
 
-            TerrainCalculateUnitSizeLimit = 500,//地形计算最小规格mm
+            TerrainCalculateUnitSizeLimit = 400,//地形计算最小规格mm
 
             TerrainBlockSizeLimit = 1000 * 1000;//地形生成最大规格mm
 
         public static int
 
-            TerrainThreadCalculateLimit = 100;
+            TerrainManagerThreadCalculateLimit = 100,
+            TerrainBlockManagerThreadCalculateLimit = 10;
 
         public static float
 
-            TerrainPrecisionLimit = 0.01F;//地形加载精度限制
+            TerrainPrecisionLimit = 0.4F;//地形加载精度限制
 
         private static int
 
@@ -202,7 +203,7 @@ namespace SE {
         private static void UnitDataCalculate(ref TerrainUnitData UnitData) {
 
             for (int i = 0; i < UnitData.Impacts.Length; i++)
-                UnitData.Impacts[i].Main(UnitData);
+                UnitData.Impacts[i].Main(ref UnitData);
         }
 
         private static void UnitDataApplyToNode(ref TerrainUnitData UnitData, ManagedTerrain.CalculateNode Node, int x, int y, int len) {
@@ -215,11 +216,11 @@ namespace SE {
 
             //注意四个顶点是不需要赋值的
             Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[5] {
-                Node.Map[x + mid, y] = new Geometries.Point<long, long>(xmid, UnitData.Region.y1, UnitData.Map[1]),
-                Node.Map[x, y + mid] = new Geometries.Point<long, long>(UnitData.Region.x1, ymid, UnitData.Map[3]),
-                Node.Map[x + mid, y + mid] = new Geometries.Point<long, long>(xmid, ymid, UnitData.Map[4]),
-                Node.Map[x + len, y + mid] = new Geometries.Point<long, long>(UnitData.Region.x2, ymid, UnitData.Map[5]),
-                Node.Map[x + mid, y + len] = new Geometries.Point<long, long>(xmid, UnitData.Region.y2, UnitData.Map[7]),
+                Node.Map[x + mid, y] = new Geometries.Point<long, long>(xmid, UnitData.Region.y1, UnitData.ExtendMap[1]),
+                Node.Map[x, y + mid] = new Geometries.Point<long, long>(UnitData.Region.x1, ymid, UnitData.ExtendMap[3]),
+                Node.Map[x + mid, y + mid] = new Geometries.Point<long, long>(xmid, ymid, UnitData.ExtendMap[4]),
+                Node.Map[x + len, y + mid] = new Geometries.Point<long, long>(UnitData.Region.x2, ymid, UnitData.ExtendMap[5]),
+                Node.Map[x + mid, y + len] = new Geometries.Point<long, long>(xmid, UnitData.Region.y2, UnitData.ExtendMap[7]),
             };
 
             TerrainBlockManager.Regist(Node.ManagedTerrainRoot, ref Points);
@@ -261,32 +262,57 @@ namespace SE {
             Geometries.Rectangle<long>[]
                 ChildRegion = Geometries.Split(ref UnitData.Region);
 
-            long[][] ChildVertex = new long[4][] {
-                    new long[4] {
-                        UnitData.Map[0],
-                        UnitData.Map[1],
-                        UnitData.Map[3],
-                        UnitData.Map[4],
-                    },
-                    new long[4] {
-                        UnitData.Map[1],
-                        UnitData.Map[2],
-                        UnitData.Map[4],
-                        UnitData.Map[5],
-                    },
-                    new long[4] {
-                        UnitData.Map[3],
-                        UnitData.Map[4],
-                        UnitData.Map[6],
-                        UnitData.Map[7],
-                    },
-                    new long[4] {
-                        UnitData.Map[4],
-                        UnitData.Map[5],
-                        UnitData.Map[7],
-                        UnitData.Map[8],
-                    },
-                };
+            long[][] ChildBaseVertex = new long[4][] {
+                new long[4] {
+                    UnitData.BaseMap[0],
+                    UnitData.BaseMap[1],
+                    UnitData.BaseMap[3],
+                    UnitData.BaseMap[4],
+                },
+                new long[4] {
+                    UnitData.BaseMap[1],
+                    UnitData.BaseMap[2],
+                    UnitData.BaseMap[4],
+                    UnitData.BaseMap[5],
+                },
+                new long[4] {
+                    UnitData.BaseMap[3],
+                    UnitData.BaseMap[4],
+                    UnitData.BaseMap[6],
+                    UnitData.BaseMap[7],
+                },
+                new long[4] {
+                    UnitData.BaseMap[4],
+                    UnitData.BaseMap[5],
+                    UnitData.BaseMap[7],
+                    UnitData.BaseMap[8],
+                },
+            }, ChildExtendVertex = new long[4][] {
+                new long[4] {
+                    UnitData.ExtendMap[0],
+                    UnitData.ExtendMap[1],
+                    UnitData.ExtendMap[3],
+                    UnitData.ExtendMap[4],
+                },
+                new long[4] {
+                    UnitData.ExtendMap[1],
+                    UnitData.ExtendMap[2],
+                    UnitData.ExtendMap[4],
+                    UnitData.ExtendMap[5],
+                },
+                new long[4] {
+                    UnitData.ExtendMap[3],
+                    UnitData.ExtendMap[4],
+                    UnitData.ExtendMap[6],
+                    UnitData.ExtendMap[7],
+                },
+                new long[4] {
+                    UnitData.ExtendMap[4],
+                    UnitData.ExtendMap[5],
+                    UnitData.ExtendMap[7],
+                    UnitData.ExtendMap[8],
+                },
+            };
 
             RandomSeed[][] ChildRandomSeed = new RandomSeed[4][] {
                 new RandomSeed[5] {
@@ -319,7 +345,7 @@ namespace SE {
                 },
             };
 
-            TerrainUnitData.Impact[][] ChildImpacts = new TerrainUnitData.Impact[4][] {
+            TerrainUnitData.Impact[][] ChildImpact = new TerrainUnitData.Impact[4][] {
                 ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[0]),
                 ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[1]),
                 ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[2]),
@@ -327,10 +353,10 @@ namespace SE {
             };
 
             return new TerrainUnitData[4] {
-                new TerrainUnitData(ref ChildRegion[0], ref ChildVertex[0], ref ChildRandomSeed[0], ref ChildImpacts[0]),
-                new TerrainUnitData(ref ChildRegion[1], ref ChildVertex[1], ref ChildRandomSeed[1], ref ChildImpacts[1]),
-                new TerrainUnitData(ref ChildRegion[2], ref ChildVertex[2], ref ChildRandomSeed[2], ref ChildImpacts[2]),
-                new TerrainUnitData(ref ChildRegion[3], ref ChildVertex[3], ref ChildRandomSeed[3], ref ChildImpacts[3]),
+                new TerrainUnitData(ref ChildRegion[0], ref ChildBaseVertex[0], ref ChildExtendVertex[0], ref ChildRandomSeed[0], ref ChildImpact[0]),
+                new TerrainUnitData(ref ChildRegion[1], ref ChildBaseVertex[1], ref ChildExtendVertex[0], ref ChildRandomSeed[1], ref ChildImpact[1]),
+                new TerrainUnitData(ref ChildRegion[2], ref ChildBaseVertex[2], ref ChildExtendVertex[0], ref ChildRandomSeed[2], ref ChildImpact[2]),
+                new TerrainUnitData(ref ChildRegion[3], ref ChildBaseVertex[3], ref ChildExtendVertex[0], ref ChildRandomSeed[3], ref ChildImpact[3]),
             };
         }
 
@@ -464,10 +490,10 @@ namespace SE {
                                 TerrainUnitData d = TempArray[i].InitialData;
 
                                 Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[4] {
-                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y1,d.Map[0]),
-                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y1,d.Map[2]),
-                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y2,d.Map[6]),
-                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.Map[8]),
+                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y1,d.BaseMap[0]),
+                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y1,d.BaseMap[2]),
+                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y2,d.BaseMap[6]),
+                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.BaseMap[8]),
                                 };
 
                                 TerrainBlockManager.Regist(TempArray[i].CalculateNodeRoot.ManagedTerrainRoot, ref Points);
@@ -488,10 +514,10 @@ namespace SE {
                                 TerrainUnitData d = TempArray[i].InitialData;
 
                                 Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[4] {
-                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y1,d.Map[0]),
-                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y1,d.Map[2]),
-                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y2,d.Map[6]),
-                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.Map[8]),
+                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y1,d.BaseMap[0]),
+                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y1,d.BaseMap[2]),
+                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y2,d.BaseMap[6]),
+                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.BaseMap[8]),
                                 };
 
                                 TerrainBlockManager.Unregist(TempArray[i].CalculateNodeRoot.ManagedTerrainRoot, ref Points);
@@ -514,7 +540,7 @@ namespace SE {
                             q.Push(terrain.CalculateNodeRoot);
                         }
                     //UnityEngine.Debug.Log("Scan Start");
-                    while (q.Count != 0 && ReviseCounter < TerrainThreadCalculateLimit) {
+                    while (q.Count != 0 && ReviseCounter < TerrainManagerThreadCalculateLimit) {
 
                         ManagedTerrain.CalculateNode now = q.Pop();
 
@@ -550,7 +576,7 @@ namespace SE {
                         }
                     }
 
-                    if (ReviseCounter != TerrainThreadCalculateLimit)
+                    if (ReviseCounter != TerrainManagerThreadCalculateLimit)
                         System.Threading.Thread.Sleep(200);
                 }
 

@@ -261,7 +261,7 @@ namespace SE {
                                 q.Push(terrain.ApplyBlockRoot);
                             }
                         //UnityEngine.Debug.Log("Scan Start");
-                        while (q.Count != 0 && ReviseCounter < TerrainThreadCalculateLimit) {
+                        while (q.Count != 0 && ReviseCounter < TerrainBlockManagerThreadCalculateLimit) {
 
                             ManagedTerrain.ApplyBlock now = q.Pop();
 
@@ -285,7 +285,7 @@ namespace SE {
                             }
                         }
 
-                        if (ReviseCounter != TerrainThreadCalculateLimit)
+                        if (ReviseCounter != TerrainBlockManagerThreadCalculateLimit)
                             System.Threading.Thread.Sleep(200);
                     }
 
