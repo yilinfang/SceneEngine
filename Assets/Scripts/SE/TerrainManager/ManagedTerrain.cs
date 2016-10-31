@@ -48,9 +48,9 @@ namespace SE {
                     private static class BitCounter {
                         public static void Increase(ref uint Counter, int Index) {
                             if (BitBool.Get(Counter, Index * 2)) {
-                                if (BitBool.Get(Counter, Index * 2 + 1))
-                                    throw new System.Exception("BitCounter Increase " + Index + ": Counter is full.");
-                                else
+                                //if (BitBool.Get(Counter, Index * 2 + 1))
+                                //    throw new System.Exception("BitCounter Increase " + Index + ": Counter is full.");
+                                //else
                                     BitBool.SetTrue(ref Counter, Index * 2 + 1);
                             } else
                                 BitBool.SetTrue(ref Counter, Index * 2);
@@ -59,13 +59,11 @@ namespace SE {
                             if (BitBool.Get(Counter, Index * 2 + 1))
                                 BitBool.SetFalse(ref Counter, Index * 2 + 1);
                             else {
-                                if (BitBool.Get(Counter, Index * 2))
+                                //if (BitBool.Get(Counter, Index * 2))
                                     BitBool.SetFalse(ref Counter, Index * 2);
-                                else
-                                    throw new System.Exception("BitCounter Decrease " + Index + ": Counter is Empty.");
+                                //else
+                                //    throw new System.Exception("BitCounter Decrease " + Index + ": Counter is Empty.");
                             }
-                            //if (GetInt (Counter, Index) == 0)
-                            //	UnityEngine.Debug.Log ("The Counter is decreased to 0.");
                         }
                         public static bool IsNotZero(uint Counter, int Index) {
                             return BitBool.Get(Counter, Index * 2);
@@ -78,8 +76,8 @@ namespace SE {
                                 BitBool.SetTrue(ref Counter, Index * 2);
                                 if (Value == 2)
                                     BitBool.SetTrue(ref Counter, Index * 2 + 1);
-                                else if (Value != 1)
-                                    throw new System.Exception("Storage Tree BitCounter SetInt : Out of Range (0-2)");
+                                //else if (Value != 1)
+                                //    throw new System.Exception("Storage Tree BitCounter SetInt : Out of Range (0-2)");
                             }
                         }
                         public static uint Init(int[] Values) {
@@ -142,6 +140,16 @@ namespace SE {
                         this.VertexHeight = VertexHeight;
 
                         this.NodeRoot = NodeRoot;
+                        if (this.NodeRoot.Height[0] == 0)
+                            this.NodeRoot.Height[0] = (VertexHeight[0] + VertexHeight[1]) / 2;
+                        if (this.NodeRoot.Height[1] == 0)
+                            this.NodeRoot.Height[1] = (VertexHeight[0] + VertexHeight[2]) / 2;
+                        if (this.NodeRoot.Height[2] == 0)
+                            this.NodeRoot.Height[2] = (VertexHeight[0] + VertexHeight[1] + VertexHeight[2] + VertexHeight[3]) / 4;
+                        if (this.NodeRoot.Height[3] == 0)
+                            this.NodeRoot.Height[3] = (VertexHeight[1] + VertexHeight[3]) / 2;
+                        if (this.NodeRoot.Height[4] == 0)
+                            this.NodeRoot.Height[4] = (VertexHeight[2] + VertexHeight[3]) / 2;
 
                         this.Region = Region;
 						
@@ -156,14 +164,13 @@ namespace SE {
                             System.Math.Min(VertexHeight[2], VertexHeight[3])
                         );
 
-                        Queue<Pair<StorageNode, int>>
-						q = new Queue<Pair<StorageNode, int>>();
+                        Stack<Pair<StorageNode, int>> s = new Stack<Pair<StorageNode, int>>();
 
-						q.Enqueue(new Pair<StorageNode, int>(NodeRoot, 1));
+						s.Push(new Pair<StorageNode, int>(NodeRoot, 1));
 
-						while (q.Count != 0) {
+						while (s.Count != 0) {
 
-							Pair<StorageNode, int> now = q.Dequeue();
+							Pair<StorageNode, int> now = s.Pop();
 
 							Depth = System.Math.Max(Depth, now.Second);
 
@@ -175,7 +182,7 @@ namespace SE {
 
 							for (int i = 0; i < 4; i++)
 								if (ChildIsNotNullOrEmpty(now.First,i))
-									q.Enqueue(new Pair<StorageNode, int>(now.First.Nodes[i], now.Second + 1));
+									s.Push(new Pair<StorageNode, int>(now.First.Nodes[i], now.Second + 1));
 						}
                     }
                     public static StorageTree Merge(StorageTree[] ChildTree) {
@@ -331,9 +338,6 @@ namespace SE {
 
 								Group<StorageNode, Geometries.Rectangle<long>, int> now = q.Dequeue ();
 
-                                //if (NewPoint.x == 953 && NewPoint.y == 61035)
-                                //    UnityEngine.Debug.Log("Loop : (" + now.Second.x1 + "," + now.Second.x2 + "," + now.Second.y1 + "," + now.Second.y2 + ")");
-
                                 Depth = System.Math.Max (Depth, now.Third);
 
 								long
@@ -448,15 +452,9 @@ namespace SE {
 							    q = new Queue<Pair<StorageNode, Geometries.Rectangle<long>>>();
 							q.Enqueue (new Pair<StorageNode, Geometries.Rectangle<long>> (NodeRoot, ref Region));
 
-                            //if (OldPoint.x == 953 && OldPoint.y == 61035)
-                            //    UnityEngine.Debug.Log("Loop : Start");
-
                             while (q.Count != 0) {
 
                                 Pair <StorageNode, Geometries.Rectangle<long>> now = q.Dequeue ();
-
-                                //if (OldPoint.x == 953 && OldPoint.y == 61035)
-                                //    UnityEngine.Debug.Log("Loop : ("+now.Second.x1+","+ now.Second.x2 + ","+ now.Second.y1 + ","+ now.Second.y2 + ")");
 
                                 long
                                     xmid = (now.Second.x1 + now.Second.x2) / 2,
@@ -561,9 +559,12 @@ namespace SE {
 						Queue<Pair<StorageNode, Geometries.Square<byte>>>
 						    q = new Queue<Pair<StorageNode, Geometries.Square<byte>>>();
 
-						q.Enqueue(new Pair<StorageNode, Geometries.Square<byte>>(
-                            NodeRoot,
-							new Geometries.Square<byte>(0, 0, (byte)(Size - 1))
+                        q.Enqueue(new Pair<StorageNode, Geometries.Square<byte>>(//一种特殊情况
+                            (NodeRoot.Counter == 0
+                            && NodeRoot.Nodes[0] == null && NodeRoot.Nodes[1] == null
+                            && NodeRoot.Nodes[2] == null && NodeRoot.Nodes[3] == null
+                            ) ? null : NodeRoot,
+                            new Geometries.Square<byte>(0, 0, (byte)(Size - 1))
                         ));
 
                         map[0, 0] = (float)(VertexHeight[0] - MinHeight) / HeightRange;
@@ -601,6 +602,17 @@ namespace SE {
                                     (float)(node.Height[3] - MinHeight) / HeightRange : (map [y1, x2] + map [y2, x2]) / 2;
                                 map[y2, xmid] = BitCounter.IsNotZero(node.Counter, 4) ?
                                     (float)(node.Height[4] - MinHeight) / HeightRange : (map [y2, x1] + map [y2, x2]) / 2;
+
+                                if (BitCounter.IsNotZero(node.Counter, 0) && node.Height[0] == 0)
+                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.0");
+                                if (BitCounter.IsNotZero(node.Counter, 1) && node.Height[1] == 0)
+                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.1");
+                                if (BitCounter.IsNotZero(node.Counter, 2) && node.Height[2] == 0)
+                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.2");
+                                if (BitCounter.IsNotZero(node.Counter, 3) && node.Height[3] == 0)
+                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.3");
+                                if (BitCounter.IsNotZero(node.Counter, 4) && node.Height[4] == 0)
+                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.4");
 
                                 if (now.Second.Length != 2) {
 
@@ -775,7 +787,8 @@ namespace SE {
                             }
 
                             UnityEngine.Object.Destroy(TempTerrainEntity);
-                        }
+                        }//,
+                        //(long)RandomSeed.Static.NextRandomNum(1000)
                     );
 
                     //UnityEngine.Debug.Log("ApplyTerrainEntity: (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ") Finished.");

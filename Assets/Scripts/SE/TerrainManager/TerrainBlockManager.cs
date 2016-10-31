@@ -152,7 +152,7 @@ namespace SE {
                     //    UnityEngine.Debug.Log("StorageTree Insert : (953,61035). Region : (" + Block.Region.x1+","+ Block.Region.x2 + ","+ Block.Region.y1 + ","+ Block.Region.y2 + ")");
 
                     Block.StorageTreeRoot.Insert(NewPoint);
-                    if (Block.StorageTreeRoot.Depth == TerrainBlockSplitDepthLimit)
+                    if (Block.StorageTreeRoot.Depth >= TerrainBlockSplitDepthLimit)
                         Block.Split();
                 }
             }

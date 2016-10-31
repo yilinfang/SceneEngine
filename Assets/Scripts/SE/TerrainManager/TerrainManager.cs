@@ -44,7 +44,7 @@ namespace SE {
 
             TerrainBlockMergeDepthLimit = 4,//地形块合并限制
 
-            TerrainCalculateUnitSizeLimit = 400,//地形计算最小规格mm
+            TerrainCalculateUnitSizeLimit = 300,//地形计算最小规格mm
 
             TerrainBlockSizeLimit = 1000 * 1000;//地形生成最大规格mm
 
@@ -55,7 +55,7 @@ namespace SE {
 
         public static float
 
-            TerrainPrecisionLimit = 0.4F;//地形加载精度限制
+            TerrainPrecisionLimit = 0.25F;//地形加载精度限制
 
         private static int
 
@@ -172,7 +172,7 @@ namespace SE {
             else if (m <= Kernel.SceneFullLoadRange + 0.1)
                 Node.Key = 999999999;
             else
-                Node.Key = Node.Range / (d - Kernel.SceneFullLoadRange);
+                Node.Key = (Node.Range / 16) / (d - Kernel.SceneFullLoadRange);
         }
 
 

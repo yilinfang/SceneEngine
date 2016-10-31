@@ -3,9 +3,7 @@
 namespace SE {
     public struct RandomSeed {
 
-        private ulong 
-            a,
-            b;
+        private ulong a, b;
 
         public RandomSeed(ulong Seed) {
             a = b = Seed;
@@ -23,5 +21,8 @@ namespace SE {
         }
 
         public void Recover() { b = a; }
+
+        public static RandomSeed 
+            Static = new RandomSeed(1432414);
     }
 }

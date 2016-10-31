@@ -34,11 +34,11 @@ public class StartSE : MonoBehaviour {
             0, 1000 * 1000 * 1000,
             0, 1000 * 1000 * 1000
         ), LiftWholeRegion = new SE.Geometries.Rectangle<long>(
-            150 * 1000, 850 * 1000,
-            150 * 1000, 850 * 1000
+            15 * 1000, 85 * 1000,
+            15 * 1000, 85 * 1000
         ), LiftCentralRegion = new SE.Geometries.Rectangle<long>(
-            300 * 1000, 700 * 1000,
-            300 * 1000, 700 * 1000
+            30 * 1000, 70 * 1000,
+            30 * 1000, 70 * 1000
         );
 
         long[] ManagedTerrainVertex = new long[4] { 0, 1000 * 1000, 1000 * 1000, 0, };
@@ -51,11 +51,11 @@ public class StartSE : MonoBehaviour {
 			new SE.RandomSeed(432885767),
         };
 
-        SE.TerrainUnitData.Impact[] ManagedTerrainImpacts = new SE.TerrainUnitData.Impact[3] {
+        SE.TerrainUnitData.Impact[] ManagedTerrainImpacts = new SE.TerrainUnitData.Impact[4] {
             new SE.TerrainImpacts.BasicSmooth(),
             new SE.TerrainImpacts.BasicRandomAdjust(),
             new SE.TerrainImpacts.BasicToExtend(),
-            //new SE.TerrainImpacts.SmoothPlane(LiftWholeRegion, LiftCentralRegion, 500 * 1000),
+            new SE.TerrainImpacts.SmoothPlane(LiftWholeRegion, LiftCentralRegion, 30 * 1000),
             //new SE.TerrainImpacts.TestImpactForTerrain(),
         };
 

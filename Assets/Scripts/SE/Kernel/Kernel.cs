@@ -43,7 +43,7 @@ namespace SE {
 
             SceneFullLoadRange = 10,//全加载距离(场景中心切换间距)m
 
-            SceneVisibleRange = 10 * 1000,//最大生成距离m
+            SceneVisibleRange = 5 * 1000,//最大生成距离m
 
             CoordinateOriginSwitchRange = 5 * 1000;//坐标原点切换距离m   (用于UnityPosition <=> SEPosition)
 

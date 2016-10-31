@@ -298,3 +298,4 @@ obj/
 .Trashes
 ehthumbs.db
 Thumbs.db
+/Assets/Scripts/SE/TerrainImpacts/Extend/GenerateRandomSmoothPlane.cs
