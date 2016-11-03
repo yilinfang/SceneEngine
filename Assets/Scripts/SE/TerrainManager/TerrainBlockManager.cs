@@ -19,11 +19,14 @@ namespace SE {
 
                 Alive = false;
 
-            private static List<Pair<ManagedTerrain, Geometries.Point<long, long>[]>>
+            private static List<Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>>
 
-                AddList = new List<Pair<ManagedTerrain, Geometries.Point<long, long>[]>>(),
+                OperateList = new List<Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>>();
 
-                RemoveList = new List<Pair<ManagedTerrain, Geometries.Point<long, long>[]>>();
+            private const bool
+
+                OPERATOR_ADD = true,
+                OPERATOR_REMOVE = false;
 
             private static SceneCenter
 
@@ -52,8 +55,8 @@ namespace SE {
 
                 //UnityEngine.Debug.Log("Regist.");
 
-                lock (AddList)
-                    AddList.Add(new Pair<ManagedTerrain, Geometries.Point<long, long>[]>(ManagedTerrainRoot, ref Points));
+                lock (OperateList)
+                    OperateList.Add(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_ADD, ManagedTerrainRoot, ref Points));
             }
 
             public static void Unregist(ManagedTerrain ManagedTerrainRoot, ref Geometries.Point<long, long>[] Points) {
@@ -61,8 +64,8 @@ namespace SE {
                 if (Points.Length != 4 && Points.Length != 5)
                     throw new System.Exception("向TerrainBlockManager删除的Point数量不为4/5.");
 
-                lock (RemoveList)
-                    RemoveList.Add(new Pair<ManagedTerrain, Geometries.Point<long, long>[]>(ManagedTerrainRoot, ref Points));
+                lock (OperateList)
+                    OperateList.Add(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_REMOVE, ManagedTerrainRoot, ref Points));
             }
 
             public static void _ChangeCoordinateOrigin(LongVector3 CoordinateOriginPosition) {
@@ -217,30 +220,23 @@ namespace SE {
 
                         //UnityEngine.Debug.Log("TerrainBlockManagerThread is looping commonly.");
 
-                        Pair<ManagedTerrain, Geometries.Point<long, long>[]>[] TempArray;
+                        Group<bool,ManagedTerrain,Geometries.Point<long,long>[]>[] TempArray;
 
-                        //加入Point
-                        if (AddList.Count != 0) {
+                        //操作Point
+                        if (OperateList.Count != 0) {
                             //UnityEngine.Debug.Log("Add");
-                            lock (AddList) {
-                                TempArray = AddList.ToArray();
-                                AddList.Clear();
+                            lock (OperateList) {
+                                TempArray = OperateList.ToArray();
+                                OperateList.Clear();
                             }
                             for (int i = 0; i < TempArray.Length; i++)
-                                for (int j = 0; j < TempArray[i].Second.Length; j++)
-                                    InsertPoint(TempArray[i].First.ApplyBlockRoot, ref TempArray[i].Second[j]);
-                        }
+                                if (TempArray[i].First == OPERATOR_ADD)
+                                    for (int j = 0; j < TempArray[i].Third.Length; j++)
+                                        InsertPoint(TempArray[i].Second.ApplyBlockRoot, ref TempArray[i].Third[j]);
+                                else
+                                    for (int j = 0; j < TempArray[i].Third.Length; j++)
+                                        DeletePoint(TempArray[i].Second.ApplyBlockRoot, ref TempArray[i].Third[j]);
 
-                        //删除Point
-                        if (RemoveList.Count != 0) {
-                            //UnityEngine.Debug.Log("Remove");
-                            lock (RemoveList) {
-                                TempArray = RemoveList.ToArray();
-                                RemoveList.Clear();
-                            }
-                            for (int i = 0; i < TempArray.Length; i++)
-                                for (int j = 0; j < TempArray[i].Second.Length; j++)
-                                    DeletePoint(TempArray[i].First.ApplyBlockRoot, ref TempArray[i].Second[j]);
                         }
 
                         TerrainBlockManagerSceneCenter.Update();
@@ -285,8 +281,7 @@ namespace SE {
                             }
                         }
 
-                        if (ReviseCounter != TerrainBlockManagerThreadCalculateLimit)
-                            System.Threading.Thread.Sleep(200);
+                        System.Threading.Thread.Sleep(200);
                     }
 
                     UnityEngine.Debug.Log("TerrainBlockManagerThread Quit.");

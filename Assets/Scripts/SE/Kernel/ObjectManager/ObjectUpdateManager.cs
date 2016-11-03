@@ -10,11 +10,9 @@ namespace SE {
 
                     ObjectHeap = new SBTree<Object>(new Comparers.KernelIDSmallFirstObjectComparer());
 
-                private static List<Object>
+                private static List<Pair<bool, Object>>
 
-                    AddList = new List<Object>(),
-
-                    RemoveList = new List<Object>();
+                    OperateList = new List<Pair<bool, Object>>();
 
                 private static bool
 
@@ -26,15 +24,13 @@ namespace SE {
 
                     NewObject.LastUpdateTime = DateTime.Now.ToBinary();
 
-                    lock (AddList) {
-                        AddList.Add(NewObject);
-                    };
+                    lock (OperateList)
+                        OperateList.Add(new Pair<bool,Object>(OPERATOR_ADD,NewObject));
                 }
 
                 public static void Unregist(Object OldObject) {
-                    lock (RemoveList) {
-                        RemoveList.Add(OldObject);
-                    }
+                    lock (OperateList)
+                        OperateList.Add(new Pair<bool, Object>(OPERATOR_REMOVE,OldObject));
                 }
 
                 public static void ThreadStart() {
@@ -68,29 +64,21 @@ namespace SE {
 
                     while (NeedAlive) {
 
-                        Object[] TempArray;
+                        //操作Object
+                        if (OperateList.Count != 0) {
 
-                        //新加入的Object
-                        if (AddList.Count != 0) {
+                            Pair<bool, Object>[] TempArray;
 
-                            lock (AddList) {
-                                TempArray = AddList.ToArray();
-                                AddList.Clear();
-                            }
-
-                            ObjectHeap.AddRange(TempArray);
-                        }
-
-                        //待清除的Object
-                        if (RemoveList.Count != 0) {
-
-                            lock (RemoveList) {
-                                TempArray = RemoveList.ToArray();
-                                RemoveList.Clear();
+                            lock (OperateList) {
+                                TempArray = OperateList.ToArray();
+                                OperateList.Clear();
                             }
 
                             for (int i = 0; i < TempArray.Length; i++)
-                                ObjectHeap.Remove(TempArray[i]);
+                                if (TempArray[i].First == OPERATOR_ADD)
+                                    ObjectHeap.Add(TempArray[i].Second);
+                                else
+                                    ObjectHeap.Remove(TempArray[i].Second);
                         }
 
                         //多线程执行各Object的Update函数

@@ -7,7 +7,7 @@ namespace SE {
 
             public class CalculateNode {
 
-                public Geometries.Point<long, long>[,] Map = null;
+                public long[,] Map = null;
 
                 public CalculateNode[,] Child = null;
 
@@ -48,9 +48,9 @@ namespace SE {
                     private static class BitCounter {
                         public static void Increase(ref uint Counter, int Index) {
                             if (BitBool.Get(Counter, Index * 2)) {
-                                //if (BitBool.Get(Counter, Index * 2 + 1))
-                                //    throw new System.Exception("BitCounter Increase " + Index + ": Counter is full.");
-                                //else
+                                if (BitBool.Get(Counter, Index * 2 + 1))
+                                    throw new System.Exception("BitCounter Increase " + Index + ": Counter is full.");
+                                else
                                     BitBool.SetTrue(ref Counter, Index * 2 + 1);
                             } else
                                 BitBool.SetTrue(ref Counter, Index * 2);
@@ -59,10 +59,10 @@ namespace SE {
                             if (BitBool.Get(Counter, Index * 2 + 1))
                                 BitBool.SetFalse(ref Counter, Index * 2 + 1);
                             else {
-                                //if (BitBool.Get(Counter, Index * 2))
+                                if (BitBool.Get(Counter, Index * 2))
                                     BitBool.SetFalse(ref Counter, Index * 2);
-                                //else
-                                //    throw new System.Exception("BitCounter Decrease " + Index + ": Counter is Empty.");
+                                else
+                                    throw new System.Exception("BitCounter Decrease " + Index + ": Counter is Empty.");
                             }
                         }
                         public static bool IsNotZero(uint Counter, int Index) {
@@ -100,6 +100,18 @@ namespace SE {
                             Nodes = new StorageNode[4] { null, null, null, null, };
                     }
 
+                    private static ObjectPool<StorageNode>
+                        NodePool = new ObjectPool<StorageNode>(
+                            1000,
+                            delegate (StorageNode Node) {
+                                for (int i = 0; i < 4; i++) Node.Nodes[i] = null;
+                                for (int i = 0; i < 5; i++) Node.Height[i] = 0;
+                                Node.Counter = 0;
+                                return true;
+                            },
+                            delegate (StorageNode Node) { return true; }
+                        );
+
                     public uint VertexCounter = 0;
 
                     public long[] VertexHeight;
@@ -117,7 +129,7 @@ namespace SE {
 
                         VertexHeight = new long[4];
 
-                        NodeRoot = new StorageNode();
+                        NodeRoot = NodePool.Get();
 
                         Region = Data.Region;
 
@@ -196,7 +208,7 @@ namespace SE {
                             );
 
                         StorageNode
-                            Node = new StorageNode();
+                            Node = NodePool.Get();
 
                         Node.Counter = BitCounter.Init(new int[5] {
                             BitCounter.GetInt(ChildTree[0].VertexCounter, 1),
@@ -288,7 +300,7 @@ namespace SE {
 
                         StorageNode[] ChildNode = new StorageNode[4];
                         for (int i = 0; i < 4; i++)
-                            ChildNode[i] = (Tree.NodeRoot.Nodes[i] == null) ? new StorageNode() : Tree.NodeRoot.Nodes[i];
+                            ChildNode[i] = (Tree.NodeRoot.Nodes[i] == null) ? NodePool.Get() : Tree.NodeRoot.Nodes[i];
 
                         return new StorageTree[4] {
                             new StorageTree(ref ChildVertexHeight[0],ChildVertexCounter[0],ref ChildRegion[0],ChildNode[0]),
@@ -300,7 +312,7 @@ namespace SE {
 
 					private static void ChildNodePrepare(StorageNode Node, int Index) {
                         if (Node.Nodes[Index] == null)
-                            Node.Nodes[Index] = new StorageNode();
+                            Node.Nodes[Index] = NodePool.Get();
 					}
 
                     public void Insert(Geometries.Point<long, long> NewPoint) {
@@ -418,6 +430,7 @@ namespace SE {
                                 return true;
 
                         if (Node.Nodes[Index].Counter == 0) {
+                            NodePool.Put(Node.Nodes[Index]);
                             Node.Nodes[Index] = null;
                             return false;
                         }
@@ -773,10 +786,8 @@ namespace SE {
                             TerrainData.baseMapResolution = TerrainDataHeightMapDetail;
                             TerrainData.size = TerrainDataSize;
                             TerrainData.SetHeightsDelayLOD(0, 0, TerrainDataHeightMap);
-                            
-                            //先应用再删除
-                            UnityEngine.GameObject TempTerrainEntity = TerrainEntity;
 
+                            UnityEngine.Object.DestroyImmediate(TerrainEntity);
                             TerrainEntity = UnityEngine.Terrain.CreateTerrainGameObject(TerrainData);
 
                             if (ManagedTerrainRoot.SeparateFromFatherObject == false) {
@@ -785,10 +796,7 @@ namespace SE {
                             } else {
                                 TerrainEntity.transform.localPosition = Kernel.SEPositionToUnityPosition(ManagedTerrainRoot.SEPosition + TerrainPosition);
                             }
-
-                            UnityEngine.Object.Destroy(TempTerrainEntity);
-                        }//,
-                        //(long)RandomSeed.Static.NextRandomNum(1000)
+                        }
                     );
 
                     //UnityEngine.Debug.Log("ApplyTerrainEntity: (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ") Finished.");
@@ -801,8 +809,7 @@ namespace SE {
                     Thread.QueueOnMainThread(
                         delegate () {
                             ApplyBlock t = this;
-                            UnityEngine.Terrain.Destroy(t.TerrainEntity);
-                            t.TerrainEntity = null;
+                            UnityEngine.GameObject.DestroyImmediate(t.TerrainEntity);
                         }
                     );
                 }

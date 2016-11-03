@@ -14,11 +14,14 @@ namespace SE {
 
                 CalculateHeap = new SBTree<Object>(new Comparers.MaintainEvaluationBigFirstObjectComparer());
 
-            private static List<Object>
+            private static List<Pair<bool, Object>>
 
-                AddList = new List<Object>(),
+                OperateList = new List<Pair<bool, Object>>();
 
-                RemoveList = new List<Object>();
+            private const bool
+
+                OPERATOR_ADD = true,
+                OPERATOR_REMOVE = false;
 
             private static long
 
@@ -76,8 +79,8 @@ namespace SE {
                         }
                     );
 
-                    lock (AddList)
-                        AddList.Add(Child);
+                    lock (OperateList)
+                        OperateList.Add(new Pair<bool, Object>(OPERATOR_ADD,Child));
                 }
             }
 
@@ -89,8 +92,8 @@ namespace SE {
                     ObjectUpdateManager.Unregist(OldObject);
 
                 if (OldObject.Lod != null)
-                    lock (RemoveList)
-                        RemoveList.Add(OldObject);
+                    lock (OperateList)
+                        OperateList.Add(new Pair<bool, Object>(OPERATOR_REMOVE, OldObject));
             }
 
             public static void ThreadNeedAlive() {
@@ -212,55 +215,46 @@ namespace SE {
 
                 while (NeedAlive > 0 && !CompulsoryStop) {
 
+                    //新加入的Object
+                    if (OperateList.Count != 0) {
+
+                        Pair<bool, Object>[] TempPairArray;
+
+                        lock (OperateList) {
+                            TempPairArray = OperateList.ToArray();
+                            OperateList.Clear();
+                        }
+
+                        for (int i = 0; i < TempPairArray.Length; i++)
+                            if (TempPairArray[i].First == OPERATOR_ADD && TempPairArray[i].Second.Lod.Length > 1) {
+
+                                CalculateHeap.Add(TempPairArray[i].Second);
+                            } else {
+
+                                Object obj = TempPairArray[i].Second;
+
+                                //CalculateHeap
+                                if (obj.CurrentLodCaseIndex < obj.Lod.Length - 1)
+                                    CalculateHeap.Remove(obj);
+
+                                //RecycleHeap
+                                if (obj.CurrentLodCaseIndex > 0)
+                                    RecycleHeap.Remove(obj);
+
+                                Thread.QueueOnMainThread(
+                                    delegate () {
+                                        UnityEngine.Object.Destroy(obj.UnityRoot);
+                                    }
+                                );
+                            }
+                    }
+
                     Object[] TempArray;
 
-                    //新加入的Object
-                    if (AddList.Count != 0) {
+                    if (ObjectManagerSceneCenter.NeedUpdate()) {
 
-                        lock (AddList) {
-                            TempArray = AddList.ToArray();
-                            AddList.Clear();
-                        }
-
-                        for (int i = 0; i < TempArray.Length; i++) {
-                            if (TempArray[i].Lod.Length > 1) {
-                                CalculateHeap.Add(TempArray[i]);
-                            }
-                        }
-                    }
-
-                    //待清除的Object
-                    if (RemoveList.Count != 0) {
-
-                        lock (RemoveList) {
-                            TempArray = RemoveList.ToArray();
-                            RemoveList.Clear();
-                        }
-
-                        for (int i = 0; i < TempArray.Length; i++) {
-
-                            Object obj = TempArray[i];
-
-                            //CalculateHeap
-                            if (obj.CurrentLodCaseIndex < obj.Lod.Length - 1)
-                                CalculateHeap.Remove(obj);
-
-                            //RecycleHeap
-                            if (obj.CurrentLodCaseIndex > 0)
-                                RecycleHeap.Remove(obj);
-
-                            Thread.QueueOnMainThread(
-                                delegate () {
-                                    UnityEngine.Object.Destroy(obj.UnityRoot);
-                                }
-                            );
-                        }
-                    }
-
-
-
-                    if (ObjectManagerSceneCenter.Update()) {
-
+                        ObjectManagerSceneCenter.Update();
+                        
                         //若场景中心变动,更新估价值(整体)
                         LastSenceCenterUpdateTime = System.DateTime.Now.ToBinary();
 
@@ -293,7 +287,9 @@ namespace SE {
 
                         //cause:Object的坐标可能会被自身或其他Object改变(活动物体).
 
-                        if (System.DateTime.Now.ToBinary() - LastSenceCenterUpdateTime < 3000) {
+                        if (System.DateTime.Now.ToBinary() - LastSenceCenterUpdateTime < 300) {
+
+                            ObjectManagerSceneCenter.Update();
 
                             TempArray = CalculateHeap.ToArray();
 

@@ -39,7 +39,7 @@ public class CameraMove : MonoBehaviour {
             gameObject.transform.Translate(new Vector3(0, 0, -10 * Time.deltaTime));
         }
         if (Input.GetKey(KeyCode.A)) {
-            gameObject.transform.Translate(new Vector3(-10 * Time.deltaTime, 0, 0 * Time.deltaTime));
+            gameObject.transform.Translate(new Vector3(-10 * Time.deltaTime, 0, 0));
         }
         if (Input.GetKey(KeyCode.D)) {
             gameObject.transform.Translate(new Vector3(10 * Time.deltaTime, 0, 0));
@@ -52,6 +52,7 @@ public class CameraMove : MonoBehaviour {
         }
 
         SE.Kernel.SetTemporarySenceCenter(SE.Kernel.UnityPositionToSEPosition(transform.position));
+        transform.localPosition = SE.Kernel.SEPositionToUnityPosition(SE.Kernel.UnityPositionToSEPosition(transform.position));
     }
 
     //规划角度;

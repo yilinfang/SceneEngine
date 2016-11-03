@@ -10,14 +10,13 @@ namespace SE {
             Position = InitialPosition;
         }
 
-        public bool Update() {
+        public void Update() { Position = Kernel.CurrentSceneCenter; }
 
-            if (Position == Kernel.CurrentSceneCenter)
-                return false;
-            else {
-                Position = Kernel.CurrentSceneCenter;
+        public bool NeedUpdate() {
+            if ((Position - Kernel.CurrentSceneCenter).toVector3().magnitude > Kernel.SceneFullLoadRange / 2)
                 return true;
-            }
+
+            return false;
         }
 
         public float GetDistence(UnityEngine.Vector3 Position) {

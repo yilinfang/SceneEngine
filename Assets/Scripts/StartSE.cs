@@ -44,11 +44,11 @@ public class StartSE : MonoBehaviour {
         long[] ManagedTerrainVertex = new long[4] { 0, 1000 * 1000, 1000 * 1000, 0, };
 
         SE.RandomSeed[] ManagedTerrainRandomSeed = new SE.RandomSeed[5] {
-            new SE.RandomSeed(432885767),
-			new SE.RandomSeed(432885767),
-			new SE.RandomSeed(432885767),
-			new SE.RandomSeed(432885767),
-			new SE.RandomSeed(432885767),
+            new SE.RandomSeed(236565345),
+			new SE.RandomSeed(236565345),
+			new SE.RandomSeed(236565345),
+			new SE.RandomSeed(236565345),
+			new SE.RandomSeed(236565345),
         };
 
         SE.TerrainUnitData.Impact[] ManagedTerrainImpacts = new SE.TerrainUnitData.Impact[4] {

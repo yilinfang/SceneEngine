@@ -14,14 +14,9 @@ namespace SE {
                 public long Time;
             }
 
-            private List<Item>
-                Actions = new List<Item>(),
-                CurrentActions = new List<Item>();
-
-            private static IEnumerator CoroutineMethod(Item x) {
-                yield return new UnityEngine.WaitForSeconds(((float)x.Time - DateTime.Now.ToBinary()) / 1000);
-                x.Action(x.Data);
-            }
+            private List<Item> Actions = new List<Item>();
+                
+            private Item[] CurrentActions;
 
             //In MainThread
             void Start() {
@@ -30,17 +25,24 @@ namespace SE {
 
             void Update() {
 
+                float UpdateStartTime = UnityEngine.Time.time;
+
                 lock (Actions) {//防堵塞
-                    CurrentActions.Clear();
-                    CurrentActions.AddRange(Actions);
+                    CurrentActions = Actions.ToArray();
                     Actions.Clear();
                 }
 
-                foreach (var item in CurrentActions) {
-                    if (item.Time <= DateTime.Now.ToBinary()) {
+                for (int i = 0; i < CurrentActions.Length; i++) {
+
+                    Item item = CurrentActions[i];
+                    if (item.Time <= DateTime.Now.ToBinary())
                         item.Action(item.Data);
-                    } else {
-                        StartCoroutine(CoroutineMethod(item));
+
+                    if (UnityEngine.Time.time - UpdateStartTime > 0.05) {
+                        lock (Actions)
+                            for (int j = i + 1; j < CurrentActions.Length; j++)
+                                Actions.Add(item);
+                        break;
                     }
                 }
             }

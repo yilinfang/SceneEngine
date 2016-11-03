@@ -19,7 +19,7 @@ namespace SE {
 
             CurrentFPS = 100;//当前的FPS
 
-        private static long
+        public static long
 
             CurrentSceneMemory = 0,//场景占用的内存:包括各种组件及资源
 

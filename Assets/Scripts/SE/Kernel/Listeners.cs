@@ -17,6 +17,7 @@ namespace SE {
 
             private float TimeSum = 1;
             private Queue<float> TimeRecord = new Queue<float>();
+            private float LastUnloadUnusedAssetsTime = 0;
 
             void Start() {
 
@@ -35,10 +36,13 @@ namespace SE {
 				TimeRecord.Enqueue(Time.deltaTime);
 
                 CurrentFPS = 100 / TimeSum;
+
+                //确保不会出现内存溢出问题
+                if (Time.time - LastUnloadUnusedAssetsTime > 10) Resources.UnloadUnusedAssets();
             }
 
             void LateUpdate() {
-                CurrentSceneMemory = Profiler.GetTotalAllocatedMemory();
+                //CurrentSceneMemory = Profiler.GetTotalAllocatedMemory();
             }
         }
 

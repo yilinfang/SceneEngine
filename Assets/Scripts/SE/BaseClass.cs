@@ -325,5 +325,10 @@ namespace SE  {
             this.Second = Second;
             this.Third = Third;
         }
+        public Group(T1 First, T2 Second, ref T3 Third) {
+            this.First = First;
+            this.Second = Second;
+            this.Third = Third;
+        }
     }
 }
