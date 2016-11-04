@@ -10,11 +10,11 @@ namespace SE.TerrainImpacts.AffectedRegions {
         }
 
         public override bool OverLapped(ref Geometries.Rectangle<long> b) {
-            return Geometries.OverLapped(a, b);
+            return Geometries.OverLapped(ref a, ref b);
         }
 
         public override bool OverLapped(long x, long y) {
-            return Geometries.OverLapped(a, x, y);
+            return Geometries.OverLapped(ref a, x, y);
         }
     }
 }

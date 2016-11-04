@@ -51,14 +51,13 @@ public class StartSE : MonoBehaviour {
 			new SE.RandomSeed(236565345),
         };
 
-        SE.TerrainUnitData.Impact[] ManagedTerrainImpacts = new SE.TerrainUnitData.Impact[4] {
-            new SE.TerrainImpacts.BasicSmooth(),
-            new SE.TerrainImpacts.BasicRandomAdjust(),
-            new SE.TerrainImpacts.BasicToExtend(),
-            //new SE.TerrainImpacts.SmoothPlane(LiftWholeRegion, LiftCentralRegion, 30 * 1000),
-            new SE.TerrainImpacts.GenerateSmoothPlane(),
-            //new SE.TerrainImpacts.TestImpactForTerrain(),
-        };
+        List<SE.TerrainUnitData.Impact> ManagedTerrainImpacts = new List<SE.TerrainUnitData.Impact>();
+        ManagedTerrainImpacts.Add(new SE.TerrainImpacts.BasicSmooth());
+        ManagedTerrainImpacts.Add(new SE.TerrainImpacts.BasicRandomAdjust());
+        ManagedTerrainImpacts.Add(new SE.TerrainImpacts.BasicToExtend());
+        ManagedTerrainImpacts.Add(new SE.TerrainImpacts.GenerateSmoothPlane());
+
+        Dictionary<int, List<SE.TerrainUnitData.Impact.CollisionRegion>> ManagedTerrainCollisionRegions = new Dictionary<int, List<SE.TerrainUnitData.Impact.CollisionRegion>>();
 
         SE.Kernel.RegistRootObject(
             "RootTerrain",
@@ -68,7 +67,8 @@ public class StartSE : MonoBehaviour {
                     ref ManagedTerrainVertex,
                     ref ManagedTerrainVertex,
                     ref ManagedTerrainRandomSeed,
-                    ref ManagedTerrainImpacts
+                    ref ManagedTerrainImpacts,
+                    ref ManagedTerrainCollisionRegions
                 ),
                 true
             ),

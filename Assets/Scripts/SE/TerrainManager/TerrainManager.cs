@@ -44,7 +44,7 @@ namespace SE {
 
             TerrainBlockMergeDepthLimit = 4,//地形块合并限制(子块最大深度)
 
-            TerrainCalculateUnitSizeLimit = 400,//地形计算最小规格mm
+            TerrainCalculateUnitSizeLimit = 600,//地形计算最小规格mm
 
             TerrainBlockSizeLimit = 1000 * 1000;//地形生成最大规格mm
 
@@ -60,7 +60,7 @@ namespace SE {
 
         public static float
 
-            TerrainPrecisionLimit = 0.25F;//地形加载精度限制
+            TerrainPrecisionLimit = 0.1F;//地形加载精度限制
 
         private static int
 
@@ -209,7 +209,7 @@ namespace SE {
 
         private static void UnitDataCalculate(ref TerrainUnitData UnitData) {
 
-            for (int i = 0; i < UnitData.Impacts.Length; i++)
+            for (int i = 0; i < UnitData.Impacts.Count; i++)
                 UnitData.Impacts[i].Main(ref UnitData);
         }
 
@@ -237,23 +237,6 @@ namespace SE {
             };
 
             TerrainBlockManager.Regist(Node.ManagedTerrainRoot, ref Points);
-        }
-
-        private static TerrainUnitData.Impact[] ImpactsFilter(ref TerrainUnitData.Impact[] Impacts, ref Geometries.Rectangle<long> Region) {
-
-            List<TerrainUnitData.Impact> list = new List<TerrainUnitData.Impact>();
-
-            for (int i = 0; i < Impacts.Length; i++)
-                if (Impacts[i].Region.OverLapped(ref Region)) {
-                    if (Impacts[i].Static)
-                        list.Add(Impacts[i]);
-                    else
-                        list.Add(Impacts[i].Clone(i, ref Region));
-                }// else {
-                //    UnityEngine.Debug.Log("Not Affected : (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
-                //}
-
-            return list.ToArray();
         }
 
         /*
@@ -334,57 +317,28 @@ namespace SE {
                 },
             };
 
-            TerrainUnitData.Impact[][] ChildImpact = new TerrainUnitData.Impact[4][] {
-                ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[0]),
-                ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[1]),
-                ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[2]),
-                ImpactsFilter(ref UnitData.Impacts,ref ChildRegion[3]),
+            List<TerrainUnitData.Impact>[] ChildImpact = new List<TerrainUnitData.Impact>[4] {
+                TerrainUnitData.Impact.ArrayFilter(ref UnitData.Impacts,ref ChildRegion[0]),
+                TerrainUnitData.Impact.ArrayFilter(ref UnitData.Impacts,ref ChildRegion[1]),
+                TerrainUnitData.Impact.ArrayFilter(ref UnitData.Impacts,ref ChildRegion[2]),
+                TerrainUnitData.Impact.ArrayFilter(ref UnitData.Impacts,ref ChildRegion[3]),
+            };
+
+            Dictionary<int, List<TerrainUnitData.Impact.CollisionRegion>>[] ChildCollisionRegion = new Dictionary<int, List<TerrainUnitData.Impact.CollisionRegion>>[4] {
+                TerrainUnitData.Impact.CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[0]),
+                TerrainUnitData.Impact.CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[1]),
+                TerrainUnitData.Impact.CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[2]),
+                TerrainUnitData.Impact.CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[3]),
             };
 
             return new TerrainUnitData[4] {
-                new TerrainUnitData(ref ChildRegion[0], ref ChildBaseVertex[0], ref ChildExtendVertex[0], ref ChildRandomSeed[0], ref ChildImpact[0]),
-                new TerrainUnitData(ref ChildRegion[1], ref ChildBaseVertex[1], ref ChildExtendVertex[1], ref ChildRandomSeed[1], ref ChildImpact[1]),
-                new TerrainUnitData(ref ChildRegion[2], ref ChildBaseVertex[2], ref ChildExtendVertex[2], ref ChildRandomSeed[2], ref ChildImpact[2]),
-                new TerrainUnitData(ref ChildRegion[3], ref ChildBaseVertex[3], ref ChildExtendVertex[3], ref ChildRandomSeed[3], ref ChildImpact[3]),
+                new TerrainUnitData(ref ChildRegion[0], ref ChildBaseVertex[0], ref ChildExtendVertex[0], ref ChildRandomSeed[0], ref ChildImpact[0], ref ChildCollisionRegion[0]),
+                new TerrainUnitData(ref ChildRegion[1], ref ChildBaseVertex[1], ref ChildExtendVertex[1], ref ChildRandomSeed[1], ref ChildImpact[1], ref ChildCollisionRegion[1]),
+                new TerrainUnitData(ref ChildRegion[2], ref ChildBaseVertex[2], ref ChildExtendVertex[2], ref ChildRandomSeed[2], ref ChildImpact[2], ref ChildCollisionRegion[2]),
+                new TerrainUnitData(ref ChildRegion[3], ref ChildBaseVertex[3], ref ChildExtendVertex[3], ref ChildRandomSeed[3], ref ChildImpact[3], ref ChildCollisionRegion[3]),
             };
         }
 
-        /*private static void UnitCalculate(ManagedTerrain.CalculateNode Node, int x, int y, int len, ref TerrainUnitData UnitData) {
-
-            if (UnitData.Region.x2 - UnitData.Region.x1 <= TerrainCalculateUnitSizeLimit * 2
-                && UnitData.Region.y2 - UnitData.Region.y1 <= TerrainCalculateUnitSizeLimit * 2)
-                return;
-
-            int half = len / 2;
-
-            UnitDataCalculate(ref UnitData);
-
-            Geometries.Square<byte> ArrayRegion = new Geometries.Square<byte>((byte)x, (byte)y, (byte)len);
-            UnitDataApplyToNode(ref UnitData, Node, ref ArrayRegion);
-
-            TerrainUnitData[] ChildUnitData = UnitDataSplit(ref UnitData);
-
-            if (len == 2) {
-
-                //ChildNode生成
-                Node.Child[x, y] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitData[0]);
-                Node.Child[x + 1, y] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitData[1]);
-                Node.Child[x, y + 1] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitData[2]);
-                Node.Child[x + 1, y + 1] = new ManagedTerrain.CalculateNode(Node.ManagedTerrainRoot, ref ChildUnitData[3]);
-                CalculateNodeUpdate(Node.Child[x, y]);
-                CalculateNodeUpdate(Node.Child[x + 1, y]);
-                CalculateNodeUpdate(Node.Child[x, y + 1]);
-                CalculateNodeUpdate(Node.Child[x + 1, y + 1]);
-
-            } else {
-
-                //继续Unit计算
-                UnitCalculate(Node, x, y, half, ref ChildUnitData[0]);
-                UnitCalculate(Node, x + half, y, half, ref ChildUnitData[1]);
-                UnitCalculate(Node, x, y + half, half, ref ChildUnitData[2]);
-                UnitCalculate(Node, x + half, y + half, half, ref ChildUnitData[3]);
-            }
-        }*/
         private static void UnitCalculate(ManagedTerrain.CalculateNode Node, ref TerrainUnitData UnitData) {
 
             Queue<Pair<TerrainUnitData, Geometries.Square<byte>>>
@@ -493,44 +447,6 @@ namespace SE {
                 }
             }
         }
-        /*private static void UnitDestory(ManagedTerrain.CalculateNode Node, int x, int y, int len, ref Geometries.Rectangle<long> Region) {
-
-            if (Region.x2 - Region.x1 <= TerrainCalculateUnitSizeLimit * 2
-                && Region.y2 - Region.y1 <= TerrainCalculateUnitSizeLimit * 2)
-                return;
-
-            //UnityEngine.Debug.Log("loop : (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
-
-            int half = len / 2;
-
-            Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[5] {
-                new Geometries.Point<long, long>(xmid, UnitData.Region.y1, Node.Map[x + half, y]),
-                new Geometries.Point<long, long>(UnitData.Region.x1, ymid, Node.Map[x, y + half]),
-                new Geometries.Point<long, long>(xmid, ymid, Node.Map[x + half, y + half]),
-                new Geometries.Point<long, long>(UnitData.Region.x2, ymid, Node.Map[x + len, y + half]),
-                new Geometries.Point<long, long>(xmid, UnitData.Region.y2, Node.Map[x + half, y + len]),
-            };
-
-            TerrainBlockManager.Unregist(Node.ManagedTerrainRoot, ref Points);
-
-            if (len == 2) {
-                NodeDestory(Node.Child[x, y]);
-                NodeDestory(Node.Child[x + 1, y]);
-                NodeDestory(Node.Child[x, y + 1]);
-                NodeDestory(Node.Child[x + 1, y + 1]);
-
-            } else {
-
-                Geometries.Rectangle<long>[] ChildRegion = Geometries.Split(ref Region);
-
-                UnitDestory(Node, x, y, half, ref ChildRegion[0]);
-                UnitDestory(Node, x + half, y, half, ref ChildRegion[1]);
-                UnitDestory(Node, x, y + half, half, ref ChildRegion[2]);
-                UnitDestory(Node, x + half, y + half, half, ref ChildRegion[3]);
-            }
-
-            //UnityEngine.Debug.Log ("NodeDestory : ("+Node.InitialData.Region.x1+","+Node.InitialData.Region.x2+","+Node.InitialData.Region.y1+","+Node.InitialData.Region.y2+") Finished.");
-        }*/
 
         public static void _ChangeCoordinateOrigin(LongVector3 CoordinateOriginPosition) {
             TerrainBlockManager._ChangeCoordinateOrigin(CoordinateOriginPosition);

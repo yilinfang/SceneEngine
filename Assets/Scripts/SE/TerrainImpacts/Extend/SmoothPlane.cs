@@ -17,7 +17,7 @@ namespace SE.TerrainImpacts {
 
         private static void Operate(SmoothPlane Impact, ref TerrainUnitData Data, int Index, long x, long y) {
 
-            if (Geometries.OverLapped(Impact.CentralRegion, x, y)) {
+            if (Geometries.OverLapped(ref Impact.CentralRegion, x, y)) {
 
                 Data.ExtendMap[Index] = Impact.PlaneHeight;
 

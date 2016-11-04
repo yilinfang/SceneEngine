@@ -784,7 +784,7 @@ namespace SE {
 
                     Thread.QueueOnMainThread(
                         delegate () {
-                            UnityEngine.GameObject.DestroyImmediate(TerrainEntity);
+                            UnityEngine.Object.DestroyImmediate(TerrainEntity);
                         }
                     );
                 }

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace SE  {
 
@@ -108,14 +109,58 @@ namespace SE  {
      */
 
     public struct TerrainUnitData {
-
         abstract public class Impact {
 
             abstract public class AffectedRegion {
+                abstract public bool OverLapped(ref Geometries.Rectangle<long> UnitRegion);
+                abstract public bool OverLapped(long x, long y);
+            }
 
+            abstract public class CollisionRegion {
+                abstract public bool Collided(CollisionRegion Region);
                 abstract public bool OverLapped(ref Geometries.Rectangle<long> UnitRegion);
 
-                abstract public bool OverLapped(long x, long y);
+                public static bool CollisionCheck(Dictionary<int,List<CollisionRegion>> RegionDictionary, int CollisionKind, CollisionRegion Region) {
+
+                    if (!RegionDictionary.ContainsKey(CollisionKind)) return false;
+                    List<CollisionRegion> CollisionList = RegionDictionary[CollisionKind];
+                    for (int i = 0; i < CollisionList.Count; i++)
+                        if (CollisionList[i].Collided(Region))
+                            return false;
+                    return true;
+                }
+
+                public static void Put(Dictionary<int, List<CollisionRegion>> RegionDictionary, int CollisionKind, CollisionRegion Region) {
+
+                    if (!RegionDictionary.ContainsKey(CollisionKind))
+                        RegionDictionary.Add(CollisionKind, new List<CollisionRegion>());
+
+                    RegionDictionary[CollisionKind].Add(Region);
+                }
+
+                public static Dictionary<int, List<CollisionRegion>> DictionaryClone(Dictionary<int, List<CollisionRegion>> Dictionary) {
+
+                    Dictionary<int, List<CollisionRegion>> Dic = new Dictionary<int, List<CollisionRegion>>();
+                    foreach (var pair in Dictionary)
+                        if (pair.Value.Count != 0)
+                            Dic.Add(pair.Key, pair.Value.GetRange(0, pair.Value.Count));
+                    return Dic;
+                }
+                public static Dictionary<int, List<CollisionRegion>> DictionaryFliter(Dictionary<int, List<CollisionRegion>> Dictionary, ref Geometries.Rectangle<long> Region) {
+
+                    Dictionary<int, List<CollisionRegion>> Dic = new Dictionary<int, List<CollisionRegion>>();
+                    foreach (var pair in Dictionary)
+                        if (pair.Value.Count != 0) {
+                            List<CollisionRegion>
+                                List = pair.Value,
+                                lis = new List<CollisionRegion>();
+                            for (int i = 0; i < List.Count; i++)
+                                if (List[i].OverLapped(ref Region))
+                                    lis.Add(List[i]);
+                            if (lis.Count != 0) Dictionary.Add(pair.Key, lis);
+                        }
+                    return Dic;
+                }
             }
 
             public bool Static = true;
@@ -128,17 +173,31 @@ namespace SE  {
 
             virtual public Impact Clone() { throw new NotImplementedException(); }
 
-            public static Impact[] ArrayClone(ref Impact[] Impacts) {
+            public static List<Impact> ArrayClone(ref List<Impact> Impacts) {
 
-                Impact[] t = new Impact[Impacts.Length];
+                List<Impact> t = new List<Impact>();
 
-                for (int i = 0; i < Impacts.Length; i++)
+                for (int i = 0; i < Impacts.Count; i++)
                     if (Impacts[i].Static)//ÄÚ´æÓÅ»¯
-                        t[i] = Impacts[i];
+                        t.Add(Impacts[i]);
                     else
-                        t[i] = Impacts[i].Clone();
-
+                        t.Add(Impacts[i].Clone());
                 return t;
+            }
+
+            public static List<Impact> ArrayFilter(ref List<Impact> Impacts, ref Geometries.Rectangle<long> Region) {
+
+                List<Impact> list = new List<Impact>();
+
+                for (int i = 0; i < Impacts.Count; i++)
+                    if (Impacts[i].Region.OverLapped(ref Region)) {
+                        if (Impacts[i].Static)
+                            list.Add(Impacts[i]);
+                        else
+                            list.Add(Impacts[i].Clone(i, ref Region));
+                    }
+
+                return list;
             }
         }
 
@@ -149,10 +208,11 @@ namespace SE  {
 
         public Geometries.Rectangle<long> Region;
 
-        public Impact[] Impacts;
+        public List<Impact> Impacts;
+        public Dictionary<int, List<Impact.CollisionRegion>> CollisionRegions;
 
         public TerrainUnitData(ref Geometries.Rectangle<long> Region, ref long[] BaseVertex, ref long[] ExtendVertex,
-            ref RandomSeed[] Seed, ref Impact[] Impacts) {
+            ref RandomSeed[] Seed, ref List<Impact> Impacts, ref Dictionary<int, List<Impact.CollisionRegion>> CollisionRegions) {
 
             this.Region = Region;
 
@@ -178,6 +238,7 @@ namespace SE  {
             this.Seed = Seed;
             
             this.Impacts = Impacts;
+            this.CollisionRegions = CollisionRegions;
         }
         public TerrainUnitData(ref TerrainUnitData Data) {
 
@@ -189,8 +250,9 @@ namespace SE  {
 
             Seed = (RandomSeed[])Data.Seed.Clone();
 
-            //class array
+            //special
             Impacts = Impact.ArrayClone(ref Data.Impacts);
+            CollisionRegions = Impact.CollisionRegion.DictionaryClone(Data.CollisionRegions);
         }
     }
 
