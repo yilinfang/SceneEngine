@@ -436,7 +436,7 @@ namespace SE {
                     }
 
                     if (ReviseCounter <= ObjectThreadCalculateLimit)
-                        System.Threading.Thread.Sleep(10000);
+                        System.Threading.Thread.Sleep(200);
                 }
 
                 Alive = false;

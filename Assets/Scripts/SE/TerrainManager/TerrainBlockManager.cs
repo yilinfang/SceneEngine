@@ -120,7 +120,7 @@ namespace SE {
                         : TerrainBlockManagerSceneCenter.GetDistence(Block.CenterAdjust.toVector3() + Block.ManagedTerrainRoot.UnityGlobalPosition),
                     m = d - Block.Range;
 
-                if (m <= Kernel.SceneFullLoadRange + 0.1) {
+                if (m <= Kernel.SceneFullLoadRange + 0.1 || Block.StorageTreeRoot == null) {
                     Block.Key = 999999999;
                 } else {
                     Block.Key = (Block.Range / (d - Kernel.SceneFullLoadRange)) * Block.Changed;
@@ -128,8 +128,6 @@ namespace SE {
             }
 
             private static void InsertPoint(ManagedTerrain.ApplyBlock Block, ref Geometries.Point<long, long> NewPoint) {
-
-                Block.Changed++;
 
                 if (Block.StorageTreeRoot == null) {
 
@@ -153,16 +151,12 @@ namespace SE {
 
                     //if (NewPoint.x == 953 && NewPoint.y == 61035)
                     //    UnityEngine.Debug.Log("StorageTree Insert : (953,61035). Region : (" + Block.Region.x1+","+ Block.Region.x2 + ","+ Block.Region.y1 + ","+ Block.Region.y2 + ")");
-
+                    Block.Changed++;
                     Block.StorageTreeRoot.Insert(NewPoint);
-                    if (Block.StorageTreeRoot.Depth >= TerrainBlockSplitDepthLimit)
-                        Block.Split();
                 }
             }
 
             private static void DeletePoint(ManagedTerrain.ApplyBlock Block, ref Geometries.Point<long, long> OldPoint) {
-
-                Block.Changed++;
 
                 if (Block.StorageTreeRoot == null) {
 
@@ -182,24 +176,11 @@ namespace SE {
                         if (OldPoint.y >= ymid)
                             DeletePoint(Block.Child[3], ref OldPoint);
                     }
-
-                    if (Block.Child[0].Child != null || Block.Child[1].Child != null
-                        || Block.Child[2].Child != null || Block.Child[3].Child != null)
-                        return;
-
-                    if (System.Math.Max(
-                            System.Math.Max(Block.Child[0].StorageTreeRoot.Depth, Block.Child[1].StorageTreeRoot.Depth),
-                            System.Math.Max(Block.Child[2].StorageTreeRoot.Depth, Block.Child[3].StorageTreeRoot.Depth)
-                        ) <= TerrainBlockMergeDepthLimit) {
-
-                        Block.Merge();//注意删除时先遍历再合并
-                        ApplyBlockUpdate(Block);
-                    }
                 } else {
 
                     //if (OldPoint.x == 953 && OldPoint.y == 61035)
                     //    UnityEngine.Debug.Log("StorageTree Delete : (953,61035). Region : (" + Block.Region.x1 + "," + Block.Region.x2 + "," + Block.Region.y1 + "," + Block.Region.y2 + ")");
-
+                    Block.Changed++;
                     Block.StorageTreeRoot.Delete(OldPoint);
                 }
             }
@@ -263,25 +244,69 @@ namespace SE {
 
                             //UnityEngine.Debug.Log("Block Scan : (" + now.Region.x1 + "," + now.Region.x2 + "," + now.Region.y1 + "," + now.Region.y2 + ")");
 
-                            if (now.Changed != 0) {
-
+                            if (now.Key != 0) {
                                 if (now.StorageTreeRoot == null) {//空中间节点
 
-                                    for (int i = 0; i < 4; i++) {
+                                    if (now.Child[0].Child == null && now.Child[1].Child == null
+                                        && now.Child[2].Child == null && now.Child[3].Child == null
+                                        && System.Math.Max(
+                                            System.Math.Max(now.Child[0].StorageTreeRoot.Depth, now.Child[1].StorageTreeRoot.Depth),
+                                            System.Math.Max(now.Child[2].StorageTreeRoot.Depth, now.Child[3].StorageTreeRoot.Depth)
+                                        ) <= TerrainBlockMergeDepthLimit) {
+                                        now.Merge();
+                                        ReviseCounter++;
 
-                                        ApplyBlockUpdate(now.Child[i]);
-                                        q.Push(now.Child[i]);
+                                    } else {
+                                        for (int i = 0; i < 4; i++) {
+                                            ApplyBlockUpdate(now.Child[i]);
+                                            q.Push(now.Child[i]);
+                                        }
                                     }
-                                } else if (now.Key > TerrainPrecisionLimit) {//发生改变
-                                    //UnityEngine.Debug.Log("Block Scan : (" + now.Region.x1 + "," + now.Region.x2 + "," + now.Region.y1 + "," + now.Region.y2 + ") Update TerrainEntity");
-                                    now.ApplyTerrainEntity();
-                                    now.Changed = 0;
-                                    ReviseCounter++;
+                                } else {
+
+                                    if (now.StorageTreeRoot.Depth >= TerrainBlockSplitDepthLimit) {
+                                        now.Split();
+                                        ReviseCounter += 4;
+                                        for (int i = 0; i < 4; i++) {
+                                            ApplyBlockUpdate(now.Child[i]);
+                                            q.Push(now.Child[i]);
+                                        }
+
+                                    } else if (now.Key > TerrainPrecisionLimit) {//发生改变
+                                        now.ApplyTerrainEntity();
+                                        now.Changed = 0;
+                                        ReviseCounter++;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (q.Count != 0 && ReviseCounter >= TerrainBlockManagerThreadCalculateLimit) {
+
+                            int TempCounter = 0;
+                            while (q.Count != 0 && TempCounter < TerrainBlockManagerThreadAppendRecycleLimit) {
+
+                                ManagedTerrain.ApplyBlock now = q.Pop();
+
+                                if (now.StorageTreeRoot == null) {//空中间节点
+                                    if (now.Child[0].Child == null && now.Child[1].Child == null
+                                        && now.Child[2].Child == null && now.Child[3].Child == null
+                                        && System.Math.Max(
+                                            System.Math.Max(now.Child[0].StorageTreeRoot.Depth, now.Child[1].StorageTreeRoot.Depth),
+                                            System.Math.Max(now.Child[2].StorageTreeRoot.Depth, now.Child[3].StorageTreeRoot.Depth)
+                                        ) <= TerrainBlockMergeDepthLimit) {
+                                        now.Merge();
+                                        TempCounter++;
+                                    } else
+                                        for (int i = 0; i < 4; i++) {
+                                            ApplyBlockUpdate(now.Child[i]);
+                                            q.Push(now.Child[i]);
+                                        }
                                 }
                             }
                         }
 
-                        System.Threading.Thread.Sleep(200);
+                        System.Threading.Thread.Sleep(50);
                     }
 
                     UnityEngine.Debug.Log("TerrainBlockManagerThread Quit.");

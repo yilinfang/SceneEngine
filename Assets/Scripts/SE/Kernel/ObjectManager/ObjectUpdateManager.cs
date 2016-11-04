@@ -109,7 +109,7 @@ namespace SE {
 
                         WaitList.Clear();
 
-                        System.Threading.Thread.Sleep(100);
+                        System.Threading.Thread.Sleep(10);
                     };
 
                     Alive = false;

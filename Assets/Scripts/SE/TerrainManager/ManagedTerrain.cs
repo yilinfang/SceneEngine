@@ -441,87 +441,97 @@ namespace SE {
                     public void Delete(Geometries.Point<long, long> OldPoint) {
 
                         bool Deleted = false;
+                        int TempDepth = Depth;
 
                         if (OldPoint.y == Region.y1) {
                             if (OldPoint.x == Region.x1) {
+                                TempDepth = 0;
                                 Deleted = true;
                                 BitCounter.Decrease(ref VertexCounter, 0);
                             } else if (OldPoint.x == Region.x2) {
+                                TempDepth = 0;
                                 Deleted = true;
                                 BitCounter.Decrease(ref VertexCounter, 1);
                             }
                         } else if (OldPoint.y == Region.y2) {
                             if (OldPoint.x == Region.x1) {
+                                TempDepth = 0;
                                 Deleted = true;
                                 BitCounter.Decrease(ref VertexCounter, 2);
                             } else if (OldPoint.x == Region.x2) {
+                                TempDepth = 0;
                                 Deleted = true;
                                 BitCounter.Decrease(ref VertexCounter, 3);
                             }
                         }
 
-						if (!Deleted) {
-							Queue<Pair<StorageNode, Geometries.Rectangle<long>>>
-							    q = new Queue<Pair<StorageNode, Geometries.Rectangle<long>>>();
-							q.Enqueue (new Pair<StorageNode, Geometries.Rectangle<long>> (NodeRoot, ref Region));
+                        if (!Deleted) {
+                            Queue<Group<StorageNode, Geometries.Rectangle<long>, byte>>
+                                q = new Queue<Group<StorageNode, Geometries.Rectangle<long>, byte>>();
+                            q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, byte>(NodeRoot, ref Region, 1));
 
                             while (q.Count != 0) {
 
-                                Pair <StorageNode, Geometries.Rectangle<long>> now = q.Dequeue ();
+                                Group<StorageNode, Geometries.Rectangle<long>, byte> now = q.Dequeue();
 
                                 long
                                     xmid = (now.Second.x1 + now.Second.x2) / 2,
                                     ymid = (now.Second.y1 + now.Second.y2) / 2;
 
-								//判断当前节点是否存在(是则结束该分支)
-								if (OldPoint.x == xmid) {
-									if (OldPoint.y == now.Second.y1) {
-										BitCounter.Decrease (ref now.First.Counter, 0);
-										Deleted = true;
-										continue;
-									} else if (OldPoint.y == now.Second.y2) {
-										BitCounter.Decrease (ref now.First.Counter, 4);
-										Deleted = true;
-										continue;
-									} else if (OldPoint.y == ymid) {
-										BitCounter.Decrease (ref now.First.Counter, 2);
-										Deleted = true;
-										continue;
-									}
-								} else if (OldPoint.y == ymid) {
-									if (OldPoint.x == now.Second.x1) {
-										BitCounter.Decrease (ref now.First.Counter, 1);
-										Deleted = true;
-										continue;
-									} else if (OldPoint.x == now.Second.x2) {
-										BitCounter.Decrease (ref now.First.Counter, 3);
-										Deleted = true;
-										continue;
-									}
-								}
+                                //判断当前节点是否存在(是则结束该分支)
+                                if (OldPoint.x == xmid) {
+                                    if (OldPoint.y == now.Second.y1) {
+                                        BitCounter.Decrease(ref now.First.Counter, 0);
+                                        TempDepth = now.Third;
+                                        Deleted = true;
+                                        continue;
+                                    } else if (OldPoint.y == now.Second.y2) {
+                                        BitCounter.Decrease(ref now.First.Counter, 4);
+                                        TempDepth = now.Third;
+                                        Deleted = true;
+                                        continue;
+                                    } else if (OldPoint.y == ymid) {
+                                        BitCounter.Decrease(ref now.First.Counter, 2);
+                                        TempDepth = now.Third;
+                                        Deleted = true;
+                                        continue;
+                                    }
+                                } else if (OldPoint.y == ymid) {
+                                    if (OldPoint.x == now.Second.x1) {
+                                        BitCounter.Decrease(ref now.First.Counter, 1);
+                                        TempDepth = now.Third;
+                                        Deleted = true;
+                                        continue;
+                                    } else if (OldPoint.x == now.Second.x2) {
+                                        BitCounter.Decrease(ref now.First.Counter, 3);
+                                        TempDepth = now.Third;
+                                        Deleted = true;
+                                        continue;
+                                    }
+                                }
 
-								Geometries.Rectangle<long>[] ChildRegion = Geometries.Split (ref now.Second);
+                                Geometries.Rectangle<long>[] ChildRegion = Geometries.Split(ref now.Second);
 
                                 //若当前节点不存在则查找子节点(可能出现分支)
                                 if (OldPoint.y <= ymid) {
                                     if (OldPoint.x <= xmid && ChildIsNotNullOrEmpty(now.First, 0))
-                                        q.Enqueue(new Pair<StorageNode, Geometries.Rectangle<long>>(now.First.Nodes[0], ref ChildRegion[0]));
+                                        q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, byte>(now.First.Nodes[0], ref ChildRegion[0], (byte)(now.Third + 1)));
                                     if (OldPoint.x >= xmid && ChildIsNotNullOrEmpty(now.First, 1))
-                                        q.Enqueue(new Pair<StorageNode, Geometries.Rectangle<long>>(now.First.Nodes[1], ref ChildRegion[1]));
+                                        q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, byte>(now.First.Nodes[1], ref ChildRegion[1], (byte)(now.Third + 1)));
                                 }
                                 if (OldPoint.y >= ymid) {
                                     if (OldPoint.x <= xmid && ChildIsNotNullOrEmpty(now.First, 2))
-                                        q.Enqueue(new Pair<StorageNode, Geometries.Rectangle<long>>(now.First.Nodes[2], ref ChildRegion[2]));
+                                        q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, byte>(now.First.Nodes[2], ref ChildRegion[2], (byte)(now.Third + 1)));
                                     if (OldPoint.x >= xmid && ChildIsNotNullOrEmpty(now.First, 3))
-                                        q.Enqueue(new Pair<StorageNode, Geometries.Rectangle<long>>(now.First.Nodes[3], ref ChildRegion[3]));
+                                        q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, byte>(now.First.Nodes[3], ref ChildRegion[3], (byte)(now.Third + 1)));
                                 }
-							}
-						}
+                            }
+                        }
 
                         if (!Deleted)
                             throw new System.Exception("StorageTree: 数据(" + OldPoint.x + "," + OldPoint.y + ")未被删除.");
 
-                        UpdateDepth();
+                        if (TempDepth == Depth) UpdateDepth();
 					}
 
                     private void UpdateDepth() {
@@ -547,8 +557,6 @@ namespace SE {
 
                     public float[,] GetInterPolatedHeightMap(int Size) {
 
-                        //回收空的StorageNode (使用栈模拟递归过程)
-
                         Stack<StorageNode> s = new Stack<StorageNode>();
 						s.Push(NodeRoot);
 						
@@ -572,13 +580,7 @@ namespace SE {
 						Queue<Pair<StorageNode, Geometries.Square<byte>>>
 						    q = new Queue<Pair<StorageNode, Geometries.Square<byte>>>();
 
-                        q.Enqueue(new Pair<StorageNode, Geometries.Square<byte>>(//一种特殊情况
-                            (NodeRoot.Counter == 0
-                            && NodeRoot.Nodes[0] == null && NodeRoot.Nodes[1] == null
-                            && NodeRoot.Nodes[2] == null && NodeRoot.Nodes[3] == null
-                            ) ? null : NodeRoot,
-                            new Geometries.Square<byte>(0, 0, (byte)(Size - 1))
-                        ));
+                        q.Enqueue(new Pair<StorageNode, Geometries.Square<byte>>(NodeRoot, new Geometries.Square<byte>(0, 0, (byte)(Size - 1))));
 
                         map[0, 0] = (float)(VertexHeight[0] - MinHeight) / HeightRange;
 						map[0, Size - 1] = (float)(VertexHeight[1] - MinHeight) / HeightRange;
@@ -589,8 +591,7 @@ namespace SE {
 
                         while (q.Count != 0) {
 
-                            Pair<StorageNode, Geometries.Square<byte>>
-                                now = q.Dequeue();
+                            Pair<StorageNode, Geometries.Square<byte>> now = q.Dequeue();
 
                             int
                                 x1 = now.Second.x,
@@ -615,17 +616,6 @@ namespace SE {
                                     (float)(node.Height[3] - MinHeight) / HeightRange : (map [y1, x2] + map [y2, x2]) / 2;
                                 map[y2, xmid] = BitCounter.IsNotZero(node.Counter, 4) ?
                                     (float)(node.Height[4] - MinHeight) / HeightRange : (map [y2, x1] + map [y2, x2]) / 2;
-
-                                if (BitCounter.IsNotZero(node.Counter, 0) && node.Height[0] == 0)
-                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.0");
-                                if (BitCounter.IsNotZero(node.Counter, 1) && node.Height[1] == 0)
-                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.1");
-                                if (BitCounter.IsNotZero(node.Counter, 2) && node.Height[2] == 0)
-                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.2");
-                                if (BitCounter.IsNotZero(node.Counter, 3) && node.Height[3] == 0)
-                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.3");
-                                if (BitCounter.IsNotZero(node.Counter, 4) && node.Height[4] == 0)
-                                    UnityEngine.Debug.Log("HeightMap has a Zero height point.4");
 
                                 if (now.Second.Length != 2) {
 
@@ -657,6 +647,7 @@ namespace SE {
 
                 public int Changed = 0;
 
+                public bool TerrainEntityReady = false;
                 public UnityEngine.GameObject TerrainEntity = null;
 
                 public LongVector3 TerrainPosition;
@@ -697,11 +688,9 @@ namespace SE {
 
 					//UnityEngine.Debug.Log ("ApplyBlock : Split (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
 
-                    Geometries.Rectangle<long>[]
-                        ChildRegion = Geometries.Split(ref Region);
+                    Geometries.Rectangle<long>[] ChildRegion = Geometries.Split(ref Region);
 
-                    StorageTree[]
-                        ChildStorageTree = StorageTree.Split(StorageTreeRoot);
+                    StorageTree[] ChildStorageTree = StorageTree.Split(StorageTreeRoot);
 
                     Child = new ApplyBlock[4];
                     for (int i = 0; i < 4; i++)
@@ -716,18 +705,14 @@ namespace SE {
                 }
 
                 public void Merge() {
-					//System.Threading.Thread.Sleep (1000);
-					//UnityEngine.Debug.Log ("ApplyBlock : Merge (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
+                    //UnityEngine.Debug.Log ("ApplyBlock : Merge (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
 
-					//UnityEngine.Debug.Log("ApplyBlock : Merge " +Child[0].StorageTreeRoot.Depth+","+Child[1].StorageTreeRoot.Depth+","+Child[2].StorageTreeRoot.Depth+","+Child[3].StorageTreeRoot.Depth);
                     StorageTreeRoot = StorageTree.Merge(new StorageTree[4] {
                         Child[0].StorageTreeRoot,
                         Child[1].StorageTreeRoot,
                         Child[2].StorageTreeRoot,
                         Child[3].StorageTreeRoot,
                     });
-					//UnityEngine.Debug.Log("ApplyBlock : Merge " +Child[0].StorageTreeRoot.Depth+","+Child[1].StorageTreeRoot.Depth+","+Child[2].StorageTreeRoot.Depth+","+Child[3].StorageTreeRoot.Depth);
-					//UnityEngine.Debug.Log ("ApplyBlock : Merge " +StorageTreeRoot.Depth);
 
                     ApplyTerrainEntity();
                     Changed = 0;
@@ -746,35 +731,26 @@ namespace SE {
 						return;
 					}
 
-                    //System.Threading.Thread.Sleep (250);
-
                     //UnityEngine.Debug.Log("ApplyTerrainEntity: (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
 
-                    //Prepare TerrainData :
+                    UnityEngine.Vector3 TerrainDataSize;
+                    int TerrainDataHeightMapDetail;
+                    LongVector3 TerrainLocalPosition;
+                    float[,] TerrainDataHeightMap;
 
-                    //get size(size)
-                    UnityEngine.Vector3
-                        TerrainDataSize = new LongVector3(
-                            Region.x2 - Region.x1,
-                            StorageTreeRoot.MaxHeight - StorageTreeRoot.MinHeight + 1,
-                            Region.y2 - Region.y1
-                        ).toVector3();
+                    TerrainDataSize = new LongVector3(
+                        Region.x2 - Region.x1,
+                        StorageTreeRoot.MaxHeight - StorageTreeRoot.MinHeight + 1,
+                        Region.y2 - Region.y1
+                    ).toVector3();
 
-                    //get heightmapResolution(heightmapdetail)
-                    int
-                        Depth = StorageTreeRoot.Depth,
-                        TerrainDataHeightMapDetail = 1;
+                    int Depth = StorageTreeRoot.Depth;
+                    TerrainDataHeightMapDetail = 1;
+                    for (int i = 0; i < Depth; i++) TerrainDataHeightMapDetail *= 2;
 
-                    for (int i = 0; i < Depth; i++)
-                        TerrainDataHeightMapDetail *= 2;
-
-                    TerrainDataHeightMapDetail=System.Math.Max(32, TerrainDataHeightMapDetail) + 1;
-
-                    //get position(Position)
-                    TerrainPosition = new LongVector3(Region.x1, StorageTreeRoot.MinHeight, Region.y1);
-
-                    //get heightmap(heightmap)
-                    float[,] TerrainDataHeightMap = StorageTreeRoot.GetInterPolatedHeightMap(TerrainDataHeightMapDetail);
+                    TerrainDataHeightMapDetail=System.Math.Min(65,System.Math.Max(32, TerrainDataHeightMapDetail) + 1);
+                    TerrainPosition = TerrainLocalPosition = new LongVector3(Region.x1, StorageTreeRoot.MinHeight, Region.y1);
+                    TerrainDataHeightMap = StorageTreeRoot.GetInterPolatedHeightMap(TerrainDataHeightMapDetail);
 
                     //new & set Terrain
 
@@ -792,9 +768,9 @@ namespace SE {
 
                             if (ManagedTerrainRoot.SeparateFromFatherObject == false) {
                                 TerrainEntity.transform.parent = ManagedTerrainRoot.UnityRoot.transform;
-                                TerrainEntity.transform.localPosition = TerrainPosition.toVector3();
+                                TerrainEntity.transform.localPosition = TerrainLocalPosition.toVector3();
                             } else {
-                                TerrainEntity.transform.localPosition = Kernel.SEPositionToUnityPosition(ManagedTerrainRoot.SEPosition + TerrainPosition);
+                                TerrainEntity.transform.localPosition = Kernel.SEPositionToUnityPosition(ManagedTerrainRoot.SEPosition + TerrainLocalPosition);
                             }
                         }
                     );
@@ -808,8 +784,7 @@ namespace SE {
 
                     Thread.QueueOnMainThread(
                         delegate () {
-                            ApplyBlock t = this;
-                            UnityEngine.GameObject.DestroyImmediate(t.TerrainEntity);
+                            UnityEngine.GameObject.DestroyImmediate(TerrainEntity);
                         }
                     );
                 }

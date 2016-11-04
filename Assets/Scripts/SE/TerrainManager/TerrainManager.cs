@@ -40,9 +40,9 @@ namespace SE {
 
         public static long
 
-            TerrainBlockSplitDepthLimit = 5,//地形块分割限制
+            TerrainBlockSplitDepthLimit = 6,//地形块分割限制
 
-            TerrainBlockMergeDepthLimit = 4,//地形块合并限制
+            TerrainBlockMergeDepthLimit = 4,//地形块合并限制(子块最大深度)
 
             TerrainCalculateUnitSizeLimit = 400,//地形计算最小规格mm
 
@@ -50,8 +50,13 @@ namespace SE {
 
         public static int
 
-            TerrainManagerThreadCalculateLimit = 50,
-            TerrainBlockManagerThreadCalculateLimit = 10;
+            TerrainManagerThreadCalculateLimit = 100,
+
+            TerrainManagerThreadAppendRecycleLimit = 100,
+
+            TerrainBlockManagerThreadCalculateLimit = 10,
+
+            TerrainBlockManagerThreadAppendRecycleLimit = 10;
 
         public static float
 
@@ -272,84 +277,60 @@ namespace SE {
 
             long[][] ChildBaseVertex = new long[4][] {
                 new long[4] {
-                    UnitData.BaseMap[0],
-                    UnitData.BaseMap[1],
-                    UnitData.BaseMap[3],
-                    UnitData.BaseMap[4],
+                    UnitData.BaseMap[0],UnitData.BaseMap[1],
+                    UnitData.BaseMap[3],UnitData.BaseMap[4],
                 },
                 new long[4] {
-                    UnitData.BaseMap[1],
-                    UnitData.BaseMap[2],
-                    UnitData.BaseMap[4],
-                    UnitData.BaseMap[5],
+                    UnitData.BaseMap[1],UnitData.BaseMap[2],
+                    UnitData.BaseMap[4],UnitData.BaseMap[5],
                 },
                 new long[4] {
-                    UnitData.BaseMap[3],
-                    UnitData.BaseMap[4],
-                    UnitData.BaseMap[6],
-                    UnitData.BaseMap[7],
+                    UnitData.BaseMap[3],UnitData.BaseMap[4],
+                    UnitData.BaseMap[6],UnitData.BaseMap[7],
                 },
                 new long[4] {
-                    UnitData.BaseMap[4],
-                    UnitData.BaseMap[5],
-                    UnitData.BaseMap[7],
-                    UnitData.BaseMap[8],
+                    UnitData.BaseMap[4],UnitData.BaseMap[5],
+                    UnitData.BaseMap[7],UnitData.BaseMap[8],
                 },
             }, ChildExtendVertex = new long[4][] {
                 new long[4] {
-                    UnitData.ExtendMap[0],
-                    UnitData.ExtendMap[1],
-                    UnitData.ExtendMap[3],
-                    UnitData.ExtendMap[4],
+                    UnitData.ExtendMap[0],UnitData.ExtendMap[1],
+                    UnitData.ExtendMap[3],UnitData.ExtendMap[4],
                 },
                 new long[4] {
-                    UnitData.ExtendMap[1],
-                    UnitData.ExtendMap[2],
-                    UnitData.ExtendMap[4],
-                    UnitData.ExtendMap[5],
+                    UnitData.ExtendMap[1],UnitData.ExtendMap[2],
+                    UnitData.ExtendMap[4],UnitData.ExtendMap[5],
                 },
                 new long[4] {
-                    UnitData.ExtendMap[3],
-                    UnitData.ExtendMap[4],
-                    UnitData.ExtendMap[6],
-                    UnitData.ExtendMap[7],
+                    UnitData.ExtendMap[3],UnitData.ExtendMap[4],
+                    UnitData.ExtendMap[6],UnitData.ExtendMap[7],
                 },
                 new long[4] {
-                    UnitData.ExtendMap[4],
-                    UnitData.ExtendMap[5],
-                    UnitData.ExtendMap[7],
-                    UnitData.ExtendMap[8],
+                    UnitData.ExtendMap[4],UnitData.ExtendMap[5],
+                    UnitData.ExtendMap[7],UnitData.ExtendMap[8],
                 },
             };
 
             RandomSeed[][] ChildRandomSeed = new RandomSeed[4][] {
                 new RandomSeed[5] {
                     UnitData.Seed[0].GetRandomSeed(111111),
-                    UnitData.Seed[1].GetRandomSeed(1111),
-                    UnitData.Seed[2].GetRandomSeed(1111),
-                    UnitData.Seed[0].GetRandomSeed(1111),
-                    UnitData.Seed[0].GetRandomSeed(2222),
+                    UnitData.Seed[1].GetRandomSeed(1111),UnitData.Seed[2].GetRandomSeed(1111),
+                    UnitData.Seed[0].GetRandomSeed(1111),UnitData.Seed[0].GetRandomSeed(2222),
                 },
                 new RandomSeed[5] {
                     UnitData.Seed[0].GetRandomSeed(222222),
-                    UnitData.Seed[1].GetRandomSeed(2222),
-                    UnitData.Seed[0].GetRandomSeed(1111),
-                    UnitData.Seed[3].GetRandomSeed(1111),
-                    UnitData.Seed[0].GetRandomSeed(3333),
+                    UnitData.Seed[1].GetRandomSeed(2222),UnitData.Seed[0].GetRandomSeed(1111),
+                    UnitData.Seed[3].GetRandomSeed(1111),UnitData.Seed[0].GetRandomSeed(3333),
                 },
                 new RandomSeed[5] {
                     UnitData.Seed[0].GetRandomSeed(333333),
-                    UnitData.Seed[0].GetRandomSeed(2222),
-                    UnitData.Seed[2].GetRandomSeed(2222),
-                    UnitData.Seed[0].GetRandomSeed(4444),
-                    UnitData.Seed[4].GetRandomSeed(1111),
+                    UnitData.Seed[0].GetRandomSeed(2222),UnitData.Seed[2].GetRandomSeed(2222),
+                    UnitData.Seed[0].GetRandomSeed(4444),UnitData.Seed[4].GetRandomSeed(1111),
                 },
                 new RandomSeed[5] {
                     UnitData.Seed[0].GetRandomSeed(444444),
-                    UnitData.Seed[0].GetRandomSeed(3333),
-                    UnitData.Seed[0].GetRandomSeed(4444),
-                    UnitData.Seed[3].GetRandomSeed(2222),
-                    UnitData.Seed[4].GetRandomSeed(2222),
+                    UnitData.Seed[0].GetRandomSeed(3333),UnitData.Seed[0].GetRandomSeed(4444),
+                    UnitData.Seed[3].GetRandomSeed(2222),UnitData.Seed[4].GetRandomSeed(2222),
                 },
             };
 
@@ -362,9 +343,9 @@ namespace SE {
 
             return new TerrainUnitData[4] {
                 new TerrainUnitData(ref ChildRegion[0], ref ChildBaseVertex[0], ref ChildExtendVertex[0], ref ChildRandomSeed[0], ref ChildImpact[0]),
-                new TerrainUnitData(ref ChildRegion[1], ref ChildBaseVertex[1], ref ChildExtendVertex[0], ref ChildRandomSeed[1], ref ChildImpact[1]),
-                new TerrainUnitData(ref ChildRegion[2], ref ChildBaseVertex[2], ref ChildExtendVertex[0], ref ChildRandomSeed[2], ref ChildImpact[2]),
-                new TerrainUnitData(ref ChildRegion[3], ref ChildBaseVertex[3], ref ChildExtendVertex[0], ref ChildRandomSeed[3], ref ChildImpact[3]),
+                new TerrainUnitData(ref ChildRegion[1], ref ChildBaseVertex[1], ref ChildExtendVertex[1], ref ChildRandomSeed[1], ref ChildImpact[1]),
+                new TerrainUnitData(ref ChildRegion[2], ref ChildBaseVertex[2], ref ChildExtendVertex[2], ref ChildRandomSeed[2], ref ChildImpact[2]),
+                new TerrainUnitData(ref ChildRegion[3], ref ChildBaseVertex[3], ref ChildExtendVertex[3], ref ChildRandomSeed[3], ref ChildImpact[3]),
             };
         }
 
@@ -661,7 +642,27 @@ namespace SE {
                         }
                     }
 
-                    if (ReviseCounter != TerrainManagerThreadCalculateLimit)
+                    if (q.Count != 0 && ReviseCounter >= TerrainManagerThreadCalculateLimit) {
+
+                        int TempCounter = 0;
+                        while (q.Count != 0 && TempCounter < TerrainManagerThreadAppendRecycleLimit) {
+
+                            ManagedTerrain.CalculateNode now = q.Pop();
+
+                            if (now.Key > TerrainPrecisionLimit) {
+
+                                if (now.Map != null)
+                                    for (int i = 0; i < 16; i++)
+                                        for (int j = 0; j < 16; j++)
+                                            if (now.Child[i, j] != null) {
+                                                CalculateNodeUpdate(now.Child[i, j]);
+                                                q.Push(now.Child[i, j]);
+                                            }
+                            } else if (now.Map != null) NodeDestory(now);
+                        }
+                    }
+
+                    if (ReviseCounter <= TerrainManagerThreadCalculateLimit)
                         System.Threading.Thread.Sleep(200);
                 }
 
