@@ -164,9 +164,9 @@ namespace SE {
                             this.NodeRoot.Height[4] = (VertexHeight[2] + VertexHeight[3]) / 2;
 
                         this.Region = Region;
-						
-						//获取Depth & MaxHeight & MinHeight
-						Depth = 0;
+
+                        //获取Depth & MaxHeight & MinHeight
+                        Depth = 0;
                         MaxHeight = System.Math.Max(
                             System.Math.Max(VertexHeight[0], VertexHeight[1]),
                             System.Math.Max(VertexHeight[2], VertexHeight[3])
@@ -178,24 +178,24 @@ namespace SE {
 
                         Stack<Pair<StorageNode, int>> s = new Stack<Pair<StorageNode, int>>();
 
-						s.Push(new Pair<StorageNode, int>(NodeRoot, 1));
+                        s.Push(new Pair<StorageNode, int>(NodeRoot, 1));
 
-						while (s.Count != 0) {
+                        while (s.Count != 0) {
 
-							Pair<StorageNode, int> now = s.Pop();
+                            Pair<StorageNode, int> now = s.Pop();
 
-							Depth = System.Math.Max(Depth, now.Second);
+                            Depth = System.Math.Max(Depth, now.Second);
 
-							for(int i=0;i<5;i++)
-								if (BitCounter.IsNotZero(now.First.Counter,i)){
-								    MaxHeight=System.Math.Max(MaxHeight,now.First.Height[i]);
-									MinHeight=System.Math.Min(MinHeight,now.First.Height[i]);
-								}
+                            for (int i = 0; i < 5; i++)
+                                if (BitCounter.IsNotZero(now.First.Counter, i)) {
+                                    MaxHeight = System.Math.Max(MaxHeight, now.First.Height[i]);
+                                    MinHeight = System.Math.Min(MinHeight, now.First.Height[i]);
+                                }
 
-							for (int i = 0; i < 4; i++)
-								if (ChildIsNotNullOrEmpty(now.First,i))
-									s.Push(new Pair<StorageNode, int>(now.First.Nodes[i], now.Second + 1));
-						}
+                            for (int i = 0; i < 4; i++)
+                                if (ChildIsNotNullOrEmpty(now.First, i))
+                                    s.Push(new Pair<StorageNode, int>(now.First.Nodes[i], now.Second + 1));
+                        }
                     }
                     public static StorageTree Merge(StorageTree[] ChildTree) {
 
@@ -271,28 +271,28 @@ namespace SE {
 
                         uint[] ChildVertexCounter = new uint[4] {
                             BitCounter.Init(new int[4] {
-								BitCounter.GetInt(Tree.VertexCounter, 0),
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 0),
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 1),
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 2),
+                                BitCounter.GetInt(Tree.VertexCounter, 0),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 0),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 1),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 2),
                             }),
                             BitCounter.Init(new int[4] {
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 0),
-								BitCounter.GetInt(Tree.VertexCounter, 1),
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 2),
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 3),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 0),
+                                BitCounter.GetInt(Tree.VertexCounter, 1),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 2),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 3),
                             }),
                             BitCounter.Init(new int[4] {
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 1),
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 2),
-								BitCounter.GetInt(Tree.VertexCounter, 2),
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 4),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 1),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 2),
+                                BitCounter.GetInt(Tree.VertexCounter, 2),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 4),
                             }),
                             BitCounter.Init(new int[4] {
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 2),
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 3),
-								BitCounter.GetInt(Tree.NodeRoot.Counter, 4),
-								BitCounter.GetInt(Tree.VertexCounter, 3),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 2),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 3),
+                                BitCounter.GetInt(Tree.NodeRoot.Counter, 4),
+                                BitCounter.GetInt(Tree.VertexCounter, 3),
                             }),
                         };
 
@@ -310,10 +310,10 @@ namespace SE {
                         };
                     }
 
-					private static void ChildNodePrepare(StorageNode Node, int Index) {
+                    private static void ChildNodePrepare(StorageNode Node, int Index) {
                         if (Node.Nodes[Index] == null)
                             Node.Nodes[Index] = NodePool.Get();
-					}
+                    }
 
                     public void Insert(Geometries.Point<long, long> NewPoint) {
 
@@ -341,87 +341,87 @@ namespace SE {
                             }
                         }
 
-						if (!Inserted) {
-							Queue<Group<StorageNode, Geometries.Rectangle<long>, int>>
-							    q = new Queue<Group<StorageNode, Geometries.Rectangle<long>, int>>();
-							q.Enqueue (new Group<StorageNode, Geometries.Rectangle<long>, int> (NodeRoot, ref Region, 1));
+                        if (!Inserted) {
+                            Queue<Group<StorageNode, Geometries.Rectangle<long>, int>>
+                                q = new Queue<Group<StorageNode, Geometries.Rectangle<long>, int>>();
+                            q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, int>(NodeRoot, ref Region, 1));
 
-							while (q.Count != 0) {
+                            while (q.Count != 0) {
 
-								Group<StorageNode, Geometries.Rectangle<long>, int> now = q.Dequeue ();
+                                Group<StorageNode, Geometries.Rectangle<long>, int> now = q.Dequeue();
 
-                                Depth = System.Math.Max (Depth, now.Third);
+                                Depth = System.Math.Max(Depth, now.Third);
 
-								long
+                                long
                                     xmid = (now.Second.x1 + now.Second.x2) / 2,
                                     ymid = (now.Second.y1 + now.Second.y2) / 2;
 
-								//判断当前节点是否能够存储(是则结束该分支)
-								if (NewPoint.x == xmid) {
-									if (NewPoint.y == now.Second.y1) {
-										BitCounter.Increase (ref now.First.Counter, 0);
-										now.First.Height [0] = NewPoint.h;
-										Inserted = true;
-										continue;
-									} else if (NewPoint.y == now.Second.y2) {
-										BitCounter.Increase (ref now.First.Counter, 4);
-										now.First.Height [4] = NewPoint.h;
-										Inserted = true;
-										continue;
-									} else if (NewPoint.y == ymid) {
-										BitCounter.Increase (ref now.First.Counter, 2);
-										now.First.Height [2] = NewPoint.h;
-										Inserted = true;
-										continue;
-									}
-								} else if (NewPoint.y == ymid) {
-									if (NewPoint.x == now.Second.x1) {
-										BitCounter.Increase (ref now.First.Counter, 1);
-										now.First.Height [1] = NewPoint.h;
-										Inserted = true;
-										continue;
-									} else if (NewPoint.x == now.Second.x2) {
-										BitCounter.Increase (ref now.First.Counter, 3);
-										now.First.Height [3] = NewPoint.h;
-										Inserted = true;
-										continue;
-									}
-								}
+                                //判断当前节点是否能够存储(是则结束该分支)
+                                if (NewPoint.x == xmid) {
+                                    if (NewPoint.y == now.Second.y1) {
+                                        BitCounter.Increase(ref now.First.Counter, 0);
+                                        now.First.Height[0] = NewPoint.h;
+                                        Inserted = true;
+                                        continue;
+                                    } else if (NewPoint.y == now.Second.y2) {
+                                        BitCounter.Increase(ref now.First.Counter, 4);
+                                        now.First.Height[4] = NewPoint.h;
+                                        Inserted = true;
+                                        continue;
+                                    } else if (NewPoint.y == ymid) {
+                                        BitCounter.Increase(ref now.First.Counter, 2);
+                                        now.First.Height[2] = NewPoint.h;
+                                        Inserted = true;
+                                        continue;
+                                    }
+                                } else if (NewPoint.y == ymid) {
+                                    if (NewPoint.x == now.Second.x1) {
+                                        BitCounter.Increase(ref now.First.Counter, 1);
+                                        now.First.Height[1] = NewPoint.h;
+                                        Inserted = true;
+                                        continue;
+                                    } else if (NewPoint.x == now.Second.x2) {
+                                        BitCounter.Increase(ref now.First.Counter, 3);
+                                        now.First.Height[3] = NewPoint.h;
+                                        Inserted = true;
+                                        continue;
+                                    }
+                                }
 
-								Geometries.Rectangle<long>[] ChildRegion = Geometries.Split (ref now.Second);
+                                Geometries.Rectangle<long>[] ChildRegion = Geometries.Split(ref now.Second);
 
-								//若当前节点不能存储则查找子节点
-								if (NewPoint.y <= ymid) {
-									if (NewPoint.x <= xmid) {
-										ChildNodePrepare (now.First, 0);
-										q.Enqueue (new Group<StorageNode, Geometries.Rectangle<long>, int> (now.First.Nodes [0], ref ChildRegion [0], now.Third + 1));
-									}
-									if (NewPoint.x >= xmid) {
-										ChildNodePrepare (now.First, 1);
-										q.Enqueue (new Group<StorageNode, Geometries.Rectangle<long>, int> (now.First.Nodes [1], ref ChildRegion [1], now.Third + 1));
-									}
-								}
-								if (NewPoint.y >= ymid) {
-									if (NewPoint.x <= xmid) {
-										ChildNodePrepare (now.First, 2);
-										q.Enqueue (new Group<StorageNode, Geometries.Rectangle<long>, int> (now.First.Nodes [2], ref ChildRegion [2], now.Third + 1));
-									}
-									if (NewPoint.x >= xmid) {
-										ChildNodePrepare (now.First, 3);
-										q.Enqueue (new Group<StorageNode, Geometries.Rectangle<long>, int> (now.First.Nodes [3], ref ChildRegion [3], now.Third + 1));
-									}
-								}
-							}
-						}
+                                //若当前节点不能存储则查找子节点
+                                if (NewPoint.y <= ymid) {
+                                    if (NewPoint.x <= xmid) {
+                                        ChildNodePrepare(now.First, 0);
+                                        q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, int>(now.First.Nodes[0], ref ChildRegion[0], now.Third + 1));
+                                    }
+                                    if (NewPoint.x >= xmid) {
+                                        ChildNodePrepare(now.First, 1);
+                                        q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, int>(now.First.Nodes[1], ref ChildRegion[1], now.Third + 1));
+                                    }
+                                }
+                                if (NewPoint.y >= ymid) {
+                                    if (NewPoint.x <= xmid) {
+                                        ChildNodePrepare(now.First, 2);
+                                        q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, int>(now.First.Nodes[2], ref ChildRegion[2], now.Third + 1));
+                                    }
+                                    if (NewPoint.x >= xmid) {
+                                        ChildNodePrepare(now.First, 3);
+                                        q.Enqueue(new Group<StorageNode, Geometries.Rectangle<long>, int>(now.First.Nodes[3], ref ChildRegion[3], now.Third + 1));
+                                    }
+                                }
+                            }
+                        }
 
                         if (!Inserted)
                             throw new System.Exception("StorageTree: 数据(" + NewPoint.x + "," + NewPoint.y + "," + NewPoint.h + ")未被插入.");
-						
+
                         MaxHeight = System.Math.Max(MaxHeight, NewPoint.h);
                         MinHeight = System.Math.Min(MinHeight, NewPoint.h);
                     }
 
-					private static bool ChildIsNotNullOrEmpty(StorageNode Node, int Index) {
+                    private static bool ChildIsNotNullOrEmpty(StorageNode Node, int Index) {
 
                         if (Node.Nodes[Index] == null) return false;
 
@@ -436,7 +436,7 @@ namespace SE {
                         }
 
                         return true;
-					}
+                    }
 
                     public void Delete(Geometries.Point<long, long> OldPoint) {
 
@@ -532,7 +532,7 @@ namespace SE {
                             throw new System.Exception("StorageTree: 数据(" + OldPoint.x + "," + OldPoint.y + ")未被删除.");
 
                         if (TempDepth == Depth) UpdateDepth();
-					}
+                    }
 
                     private void UpdateDepth() {
 
@@ -558,16 +558,16 @@ namespace SE {
                     public float[,] GetInterPolatedHeightMap(int Size) {
 
                         Stack<StorageNode> s = new Stack<StorageNode>();
-						s.Push(NodeRoot);
-						
-						while (s.Count != 0) {
-												
-							StorageNode now = s.Pop();
+                        s.Push(NodeRoot);
 
-							for (int i = 0; i < 4; i++)
-								if (ChildIsNotNullOrEmpty(now,i))
-									s.Push(now.Nodes[i]);
-						}
+                        while (s.Count != 0) {
+
+                            StorageNode now = s.Pop();
+
+                            for (int i = 0; i < 4; i++)
+                                if (ChildIsNotNullOrEmpty(now, i))
+                                    s.Push(now.Nodes[i]);
+                        }
 
                         /*
                          * 注意HeightMap中xy坐标与世界坐标相反!!!!!!!!!!!!
@@ -577,14 +577,14 @@ namespace SE {
 
                         float[,] map = new float[Size, Size];
 
-						Queue<Pair<StorageNode, Geometries.Square<byte>>>
-						    q = new Queue<Pair<StorageNode, Geometries.Square<byte>>>();
+                        Queue<Pair<StorageNode, Geometries.Square<byte>>>
+                            q = new Queue<Pair<StorageNode, Geometries.Square<byte>>>();
 
                         q.Enqueue(new Pair<StorageNode, Geometries.Square<byte>>(NodeRoot, new Geometries.Square<byte>(0, 0, (byte)(Size - 1))));
 
                         map[0, 0] = (float)(VertexHeight[0] - MinHeight) / HeightRange;
-						map[0, Size - 1] = (float)(VertexHeight[1] - MinHeight) / HeightRange;
-						map[Size - 1, 0] = (float)(VertexHeight[2] - MinHeight) / HeightRange;
+                        map[0, Size - 1] = (float)(VertexHeight[1] - MinHeight) / HeightRange;
+                        map[Size - 1, 0] = (float)(VertexHeight[2] - MinHeight) / HeightRange;
                         map[Size - 1, Size - 1] = (float)(VertexHeight[3] - MinHeight) / HeightRange;
 
                         //UnityEngine.Debug.Log(map[0, 0] + "  " + map[Size - 1, 0] + "  " + map[0, Size - 1] + "  " + map[Size - 1, Size - 1]);
@@ -607,22 +607,22 @@ namespace SE {
                                 StorageNode node = now.First;
 
                                 map[y1, xmid] = BitCounter.IsNotZero(node.Counter, 0) ?
-                                    (float)(node.Height[0] - MinHeight) / HeightRange : (map [y1, x1] + map [y1, x2]) / 2;
+                                    (float)(node.Height[0] - MinHeight) / HeightRange : (map[y1, x1] + map[y1, x2]) / 2;
                                 map[ymid, x1] = BitCounter.IsNotZero(node.Counter, 1) ?
-                                    (float)(node.Height[1] - MinHeight) / HeightRange : (map [y1, x1] + map [y2, x1]) / 2;
+                                    (float)(node.Height[1] - MinHeight) / HeightRange : (map[y1, x1] + map[y2, x1]) / 2;
                                 map[ymid, xmid] = BitCounter.IsNotZero(node.Counter, 2) ?
-                                    (float)(node.Height[2] - MinHeight) / HeightRange : (map [y1, x1] + map [y1, x2] + map [y2, x1] + map [y2, x2]) / 4;
+                                    (float)(node.Height[2] - MinHeight) / HeightRange : (map[y1, x1] + map[y1, x2] + map[y2, x1] + map[y2, x2]) / 4;
                                 map[ymid, x2] = BitCounter.IsNotZero(node.Counter, 3) ?
-                                    (float)(node.Height[3] - MinHeight) / HeightRange : (map [y1, x2] + map [y2, x2]) / 2;
+                                    (float)(node.Height[3] - MinHeight) / HeightRange : (map[y1, x2] + map[y2, x2]) / 2;
                                 map[y2, xmid] = BitCounter.IsNotZero(node.Counter, 4) ?
-                                    (float)(node.Height[4] - MinHeight) / HeightRange : (map [y2, x1] + map [y2, x2]) / 2;
+                                    (float)(node.Height[4] - MinHeight) / HeightRange : (map[y2, x1] + map[y2, x2]) / 2;
 
                                 if (now.Second.Length != 2) {
 
                                     Geometries.Square<byte>[] ChildArrayRegion = Geometries.Split(ref now.Second);
 
                                     for (int i = 0; i < 4; i++)
-										q.Enqueue(new Pair<StorageNode, Geometries.Square<byte>>(node.Nodes[i], ref ChildArrayRegion[i]));
+                                        q.Enqueue(new Pair<StorageNode, Geometries.Square<byte>>(node.Nodes[i], ref ChildArrayRegion[i]));
                                 }
                             } else {
 
@@ -686,7 +686,7 @@ namespace SE {
 
                 public void Split() {
 
-					//UnityEngine.Debug.Log ("ApplyBlock : Split (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
+                    //UnityEngine.Debug.Log ("ApplyBlock : Split (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
 
                     Geometries.Rectangle<long>[] ChildRegion = Geometries.Split(ref Region);
 
@@ -725,11 +725,11 @@ namespace SE {
 
                 public void ApplyTerrainEntity() {
 
-					if (Region.x2 - Region.x1 >= TerrainBlockSizeLimit
+                    if (Region.x2 - Region.x1 >= TerrainBlockSizeLimit
                         || Region.y2 - Region.y1 >= TerrainBlockSizeLimit) {
-						//UnityEngine.Debug.Log ("ApplyTerrainEntity Reject : >= TerrainBlockSizeLimit");
-						return;
-					}
+                        //UnityEngine.Debug.Log ("ApplyTerrainEntity Reject : >= TerrainBlockSizeLimit");
+                        return;
+                    }
 
                     //UnityEngine.Debug.Log("ApplyTerrainEntity: (" + Region.x1 + "," + Region.x2 + "," + Region.y1 + "," + Region.y2 + ")");
 
@@ -748,7 +748,7 @@ namespace SE {
                     TerrainDataHeightMapDetail = 1;
                     for (int i = 0; i < Depth; i++) TerrainDataHeightMapDetail *= 2;
 
-                    TerrainDataHeightMapDetail=System.Math.Min(65,System.Math.Max(32, TerrainDataHeightMapDetail) + 1);
+                    TerrainDataHeightMapDetail = System.Math.Min(65, System.Math.Max(32, TerrainDataHeightMapDetail) + 1);
                     TerrainPosition = TerrainLocalPosition = new LongVector3(Region.x1, StorageTreeRoot.MinHeight, Region.y1);
                     TerrainDataHeightMap = StorageTreeRoot.GetInterPolatedHeightMap(TerrainDataHeightMapDetail);
 
@@ -780,7 +780,7 @@ namespace SE {
 
                 public void RemoveTerrainEntity() {
 
-					//System.Threading.Thread.Sleep (250);
+                    //System.Threading.Thread.Sleep (250);
 
                     Thread.QueueOnMainThread(
                         delegate () {

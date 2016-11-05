@@ -122,8 +122,10 @@ namespace SE {
 
                 if (m <= Kernel.SceneFullLoadRange + 0.1 || Block.StorageTreeRoot == null) {
                     Block.Key = 999999999;
+                } else if (Block.Changed == 0) {
+                    Block.Key = 0;
                 } else {
-                    Block.Key = (Block.Range / (d - Kernel.SceneFullLoadRange)) * Block.Changed;
+                    Block.Key = (Block.Range / (d - Kernel.SceneFullLoadRange)) * (1 + Block.Changed / 10);
                 }
             }
 
@@ -201,7 +203,7 @@ namespace SE {
 
                         //UnityEngine.Debug.Log("TerrainBlockManagerThread is looping commonly.");
 
-                        Group<bool,ManagedTerrain,Geometries.Point<long,long>[]>[] TempArray;
+                        Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>[] TempArray;
 
                         //操作Point
                         if (OperateList.Count != 0) {
@@ -282,7 +284,7 @@ namespace SE {
                                 }
                             }
                         }
-                        
+
                         if (q.Count != 0 && ReviseCounter >= TerrainBlockManagerThreadCalculateLimit) {
 
                             int TempCounter = 0;

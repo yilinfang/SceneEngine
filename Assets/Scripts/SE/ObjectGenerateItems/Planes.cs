@@ -1,6 +1,5 @@
 ﻿
 
-
 namespace SE.ObjectGenerateItems {
     public class Planes : TerrainImpacts.ObjectGenerator.ObjectGenerateItem {
 

@@ -226,7 +226,7 @@ namespace SE {
             Node.Map[ArrayRegion.x + mid, ArrayRegion.y + mid] = UnitData.ExtendMap[4];
             Node.Map[ArrayRegion.x + ArrayRegion.Length, ArrayRegion.y + mid] = UnitData.ExtendMap[5];
             Node.Map[ArrayRegion.x + mid, ArrayRegion.y + ArrayRegion.Length] = UnitData.ExtendMap[7];
-            
+
             //注意四个顶点是不需要赋值的
             Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[5] {
                 new Geometries.Point<long, long>(xmid, UnitData.Region.y1, UnitData.ExtendMap[1]),
@@ -474,7 +474,7 @@ namespace SE {
 
                 while (NeedAlive > 0 && !CompulsoryStop) {
 
-                    Pair<bool,ManagedTerrain>[] TempArray;
+                    Pair<bool, ManagedTerrain>[] TempArray;
 
                     //操作ManagedTerrain
                     if (OperateList.Count != 0) {
@@ -510,7 +510,7 @@ namespace SE {
                                 TerrainBlockManager.Unregist(TempArray[i].Second.CalculateNodeRoot.ManagedTerrainRoot, Points);
 
                                 lock (ManagedTerrains) ManagedTerrains.Remove(TempArray[i].Second);
-                            }  
+                            }
                     }
 
                     TerrainManagerSceneCenter.Update();
@@ -543,7 +543,7 @@ namespace SE {
                                             q.Push(now.Child[i, j]);
                                         }
                             } else {//未计算
-                                    
+
                                 //UnityEngine.Debug.Log ("Node Calculate : (" + now.InitialData.Region.x1 + "," + now.InitialData.Region.x2 + "," + now.InitialData.Region.y1 + "," + now.InitialData.Region.y2 + ")");
                                 NodeCalculate(now);
                                 ReviseCounter++;
@@ -591,4 +591,3 @@ namespace SE {
         }
     }
 }
- 
