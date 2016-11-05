@@ -100,5 +100,12 @@ namespace SE {
             else
                 return false;
         }
+
+        public static Rectangle<long> TransformToRegionCenter(long xLength, long yLength, ref Rectangle<long> Region) {
+            return new Rectangle<long>(
+                (Region.x1 + Region.x2) / 2 - xLength / 2, (Region.x1 + Region.x2) / 2 + xLength - xLength / 2,
+                (Region.y1 + Region.y2) / 2 - yLength / 2, (Region.y1 + Region.y2) / 2 + yLength - yLength / 2
+            );
+        }
     }
 }

@@ -3,6 +3,7 @@ namespace SE.TerrainImpacts {
     public class BasicSmooth : TerrainUnitData.Impact {
 
         public BasicSmooth() {
+            Active = true;
             Static = true;
             Region = new AffectedRegions.Whole();
         }

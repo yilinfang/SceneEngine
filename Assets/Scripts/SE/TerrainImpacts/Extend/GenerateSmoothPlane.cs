@@ -3,6 +3,7 @@ namespace SE.TerrainImpacts {
     public class GenerateSmoothPlane : TerrainUnitData.Impact {
 
         public GenerateSmoothPlane() {
+            Active = true;
             Static = true;
             Region = new AffectedRegions.Whole();
         }

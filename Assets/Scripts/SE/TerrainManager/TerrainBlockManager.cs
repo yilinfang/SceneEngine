@@ -48,7 +48,7 @@ namespace SE {
                 NeedAlive = false;
             }
 
-            public static void Regist(ManagedTerrain ManagedTerrainRoot, ref Geometries.Point<long, long>[] Points) {
+            public static void Regist(ManagedTerrain ManagedTerrainRoot, Geometries.Point<long, long>[] Points) {
 
                 if (Points.Length != 4 && Points.Length != 5)
                     throw new System.Exception("向TerrainBlockManager添加的Point数量不为4/5.");
@@ -56,16 +56,16 @@ namespace SE {
                 //UnityEngine.Debug.Log("Regist.");
 
                 lock (OperateList)
-                    OperateList.Add(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_ADD, ManagedTerrainRoot, ref Points));
+                    OperateList.Add(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_ADD, ManagedTerrainRoot, Points));
             }
 
-            public static void Unregist(ManagedTerrain ManagedTerrainRoot, ref Geometries.Point<long, long>[] Points) {
+            public static void Unregist(ManagedTerrain ManagedTerrainRoot, Geometries.Point<long, long>[] Points) {
 
                 if (Points.Length != 4 && Points.Length != 5)
                     throw new System.Exception("向TerrainBlockManager删除的Point数量不为4/5.");
 
                 lock (OperateList)
-                    OperateList.Add(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_REMOVE, ManagedTerrainRoot, ref Points));
+                    OperateList.Add(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_REMOVE, ManagedTerrainRoot, Points));
             }
 
             public static void _ChangeCoordinateOrigin(LongVector3 CoordinateOriginPosition) {
@@ -210,13 +210,15 @@ namespace SE {
                                 TempArray = OperateList.ToArray();
                                 OperateList.Clear();
                             }
-                            for (int i = 0; i < TempArray.Length; i++)
-                                if (TempArray[i].First == OPERATOR_ADD)
-                                    for (int j = 0; j < TempArray[i].Third.Length; j++)
-                                        InsertPoint(TempArray[i].Second.ApplyBlockRoot, ref TempArray[i].Third[j]);
+                            for (int i = 0; i < TempArray.Length; i++) {
+                                Group<bool, ManagedTerrain, Geometries.Point<long, long>[]> now = TempArray[i];
+                                if (now.First == OPERATOR_ADD)
+                                    for (int j = 0; j < now.Third.Length; j++)
+                                        InsertPoint(now.Second.ApplyBlockRoot, ref now.Third[j]);
                                 else
-                                    for (int j = 0; j < TempArray[i].Third.Length; j++)
-                                        DeletePoint(TempArray[i].Second.ApplyBlockRoot, ref TempArray[i].Third[j]);
+                                    for (int j = 0; j < now.Third.Length; j++)
+                                        DeletePoint(now.Second.ApplyBlockRoot, ref now.Third[j]);
+                            }
 
                         }
 

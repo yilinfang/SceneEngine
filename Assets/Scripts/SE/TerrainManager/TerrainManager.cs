@@ -44,7 +44,7 @@ namespace SE {
 
             TerrainBlockMergeDepthLimit = 4,//地形块合并限制(子块最大深度)
 
-            TerrainCalculateUnitSizeLimit = 600,//地形计算最小规格mm
+            TerrainCalculateUnitSizeLimit = 800,//地形计算最小规格mm
 
             TerrainBlockSizeLimit = 1000 * 1000;//地形生成最大规格mm
 
@@ -60,7 +60,7 @@ namespace SE {
 
         public static float
 
-            TerrainPrecisionLimit = 0.1F;//地形加载精度限制
+            TerrainPrecisionLimit = 0.05F;//地形加载精度限制
 
         private static int
 
@@ -236,7 +236,7 @@ namespace SE {
                 new Geometries.Point<long, long>(xmid, UnitData.Region.y2, UnitData.ExtendMap[7]),
             };
 
-            TerrainBlockManager.Regist(Node.ManagedTerrainRoot, ref Points);
+            TerrainBlockManager.Regist(Node.ManagedTerrainRoot, Points);
         }
 
         /*
@@ -318,24 +318,24 @@ namespace SE {
             };
 
             List<TerrainUnitData.Impact>[] ChildImpact = new List<TerrainUnitData.Impact>[4] {
-                TerrainUnitData.Impact.ArrayFilter(ref UnitData.Impacts,ref ChildRegion[0]),
-                TerrainUnitData.Impact.ArrayFilter(ref UnitData.Impacts,ref ChildRegion[1]),
-                TerrainUnitData.Impact.ArrayFilter(ref UnitData.Impacts,ref ChildRegion[2]),
-                TerrainUnitData.Impact.ArrayFilter(ref UnitData.Impacts,ref ChildRegion[3]),
+                TerrainUnitData.Impact.ArrayFilter(UnitData.Impacts,ref ChildRegion[0]),
+                TerrainUnitData.Impact.ArrayFilter(UnitData.Impacts,ref ChildRegion[1]),
+                TerrainUnitData.Impact.ArrayFilter(UnitData.Impacts,ref ChildRegion[2]),
+                TerrainUnitData.Impact.ArrayFilter(UnitData.Impacts,ref ChildRegion[3]),
             };
 
-            Dictionary<int, List<TerrainUnitData.Impact.CollisionRegion>>[] ChildCollisionRegion = new Dictionary<int, List<TerrainUnitData.Impact.CollisionRegion>>[4] {
-                TerrainUnitData.Impact.CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[0]),
-                TerrainUnitData.Impact.CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[1]),
-                TerrainUnitData.Impact.CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[2]),
-                TerrainUnitData.Impact.CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[3]),
+            Dictionary<int, List<CollisionRegion>>[] ChildCollisionRegion = new Dictionary<int, List<CollisionRegion>>[4] {
+                CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[0]),
+                CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[1]),
+                CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[2]),
+                CollisionRegion.DictionaryFliter(UnitData.CollisionRegions, ref ChildRegion[3]),
             };
 
             return new TerrainUnitData[4] {
-                new TerrainUnitData(ref ChildRegion[0], ref ChildBaseVertex[0], ref ChildExtendVertex[0], ref ChildRandomSeed[0], ref ChildImpact[0], ref ChildCollisionRegion[0]),
-                new TerrainUnitData(ref ChildRegion[1], ref ChildBaseVertex[1], ref ChildExtendVertex[1], ref ChildRandomSeed[1], ref ChildImpact[1], ref ChildCollisionRegion[1]),
-                new TerrainUnitData(ref ChildRegion[2], ref ChildBaseVertex[2], ref ChildExtendVertex[2], ref ChildRandomSeed[2], ref ChildImpact[2], ref ChildCollisionRegion[2]),
-                new TerrainUnitData(ref ChildRegion[3], ref ChildBaseVertex[3], ref ChildExtendVertex[3], ref ChildRandomSeed[3], ref ChildImpact[3], ref ChildCollisionRegion[3]),
+                new TerrainUnitData(ref ChildRegion[0], ChildBaseVertex[0], ChildExtendVertex[0], ChildRandomSeed[0], ChildImpact[0], ChildCollisionRegion[0]),
+                new TerrainUnitData(ref ChildRegion[1], ChildBaseVertex[1], ChildExtendVertex[1], ChildRandomSeed[1], ChildImpact[1], ChildCollisionRegion[1]),
+                new TerrainUnitData(ref ChildRegion[2], ChildBaseVertex[2], ChildExtendVertex[2], ChildRandomSeed[2], ChildImpact[2], ChildCollisionRegion[2]),
+                new TerrainUnitData(ref ChildRegion[3], ChildBaseVertex[3], ChildExtendVertex[3], ChildRandomSeed[3], ChildImpact[3], ChildCollisionRegion[3]),
             };
         }
 
@@ -429,7 +429,7 @@ namespace SE {
                     new Geometries.Point<long, long>(xmid, now.First.y2, Node.Map[now.Second.x + half, now.Second.y + now.Second.Length]),
                 };
 
-                TerrainBlockManager.Unregist(Node.ManagedTerrainRoot, ref Points);
+                TerrainBlockManager.Unregist(Node.ManagedTerrainRoot, Points);
 
                 if (now.Second.Length == 2) {
                     NodeDestory(Node.Child[now.Second.x, now.Second.y]);
@@ -494,7 +494,7 @@ namespace SE {
                                     new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.BaseMap[8]),
                                 };
 
-                                TerrainBlockManager.Regist(TempArray[i].Second.CalculateNodeRoot.ManagedTerrainRoot, ref Points);
+                                TerrainBlockManager.Regist(TempArray[i].Second.CalculateNodeRoot.ManagedTerrainRoot, Points);
 
                                 lock (ManagedTerrains) ManagedTerrains.Add(TempArray[i].Second);
                             } else {
@@ -507,7 +507,7 @@ namespace SE {
                                     new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.BaseMap[8]),
                                 };
 
-                                TerrainBlockManager.Unregist(TempArray[i].Second.CalculateNodeRoot.ManagedTerrainRoot, ref Points);
+                                TerrainBlockManager.Unregist(TempArray[i].Second.CalculateNodeRoot.ManagedTerrainRoot, Points);
 
                                 lock (ManagedTerrains) ManagedTerrains.Remove(TempArray[i].Second);
                             }  

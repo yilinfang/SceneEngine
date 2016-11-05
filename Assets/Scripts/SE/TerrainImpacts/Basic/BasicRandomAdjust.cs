@@ -3,6 +3,7 @@ namespace SE.TerrainImpacts {
 	public class BasicRandomAdjust : TerrainUnitData.Impact {
 
 		public BasicRandomAdjust() {
+            Active = true;
             Static = true;
 			Region = new AffectedRegions.Whole();
 		}

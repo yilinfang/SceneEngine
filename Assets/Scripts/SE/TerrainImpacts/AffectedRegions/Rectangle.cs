@@ -1,11 +1,11 @@
 ﻿
 
 namespace SE.TerrainImpacts.AffectedRegions {
-    public sealed class Rectangle_Standard:TerrainUnitData.Impact.AffectedRegion {
+    public sealed class Rectangle:TerrainUnitData.Impact.AffectedRegion {
 
         public Geometries.Rectangle<long> a;
 
-        public Rectangle_Standard(ref Geometries.Rectangle<long> Region) {
+        public Rectangle(ref Geometries.Rectangle<long> Region) {
             a = Region;
         }
 

@@ -145,7 +145,7 @@ namespace SE {
                             System.Math.Min(VertexHeight[2], VertexHeight[3])
                         );
                     }
-                    private StorageTree(ref long[] VertexHeight, uint VertexCounter, ref Geometries.Rectangle<long> Region, StorageNode NodeRoot) {
+                    private StorageTree(long[] VertexHeight, uint VertexCounter, ref Geometries.Rectangle<long> Region, StorageNode NodeRoot) {
 
                         this.VertexCounter = VertexCounter;
 
@@ -237,7 +237,7 @@ namespace SE {
                             VertexHeight[i] = ChildTree[i].VertexHeight[i];
                         }
 
-                        return new StorageTree(ref VertexHeight, VertexCounter, ref Region, Node);
+                        return new StorageTree(VertexHeight, VertexCounter, ref Region, Node);
                     }
 
                     public static StorageTree[] Split(StorageTree Tree) {
@@ -303,10 +303,10 @@ namespace SE {
                             ChildNode[i] = (Tree.NodeRoot.Nodes[i] == null) ? NodePool.Get() : Tree.NodeRoot.Nodes[i];
 
                         return new StorageTree[4] {
-                            new StorageTree(ref ChildVertexHeight[0],ChildVertexCounter[0],ref ChildRegion[0],ChildNode[0]),
-                            new StorageTree(ref ChildVertexHeight[1],ChildVertexCounter[1],ref ChildRegion[1],ChildNode[1]),
-                            new StorageTree(ref ChildVertexHeight[2],ChildVertexCounter[2],ref ChildRegion[2],ChildNode[2]),
-                            new StorageTree(ref ChildVertexHeight[3],ChildVertexCounter[3],ref ChildRegion[3],ChildNode[3]),
+                            new StorageTree(ChildVertexHeight[0],ChildVertexCounter[0],ref ChildRegion[0],ChildNode[0]),
+                            new StorageTree(ChildVertexHeight[1],ChildVertexCounter[1],ref ChildRegion[1],ChildNode[1]),
+                            new StorageTree(ChildVertexHeight[2],ChildVertexCounter[2],ref ChildRegion[2],ChildNode[2]),
+                            new StorageTree(ChildVertexHeight[3],ChildVertexCounter[3],ref ChildRegion[3],ChildNode[3]),
                         };
                     }
 

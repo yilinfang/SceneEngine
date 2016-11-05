@@ -6,9 +6,9 @@ namespace SE.TerrainImpacts {
         private Geometries.Rectangle<long> CentralRegion, WholeRegion;
 
         public SmoothPlane(Geometries.Rectangle<long> WholeRegion, Geometries.Rectangle<long> CentralRegion, long PlaneHeight) {
-
+            Active = true;
             Static = true;
-            Region = new AffectedRegions.Rectangle_Standard(ref WholeRegion);
+            Region = new AffectedRegions.Rectangle(ref WholeRegion);
 
             this.WholeRegion = WholeRegion;
             this.CentralRegion = CentralRegion;
@@ -21,7 +21,7 @@ namespace SE.TerrainImpacts {
 
                 Data.ExtendMap[Index] = Impact.PlaneHeight;
 
-            } else if (Impact.Region.OverLapped(x, y)) {
+            } else if (Geometries.OverLapped(ref Impact.WholeRegion, x, y)) {
 
                 double HeightAdjustRate = 1;
 

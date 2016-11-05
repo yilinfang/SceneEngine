@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-
-
+using SE.TerrainImpacts;
 
 public class StartSE : MonoBehaviour {
 	
@@ -51,24 +50,34 @@ public class StartSE : MonoBehaviour {
 			new SE.RandomSeed(236565345),
         };
 
-        List<SE.TerrainUnitData.Impact> ManagedTerrainImpacts = new List<SE.TerrainUnitData.Impact>();
-        ManagedTerrainImpacts.Add(new SE.TerrainImpacts.BasicSmooth());
-        ManagedTerrainImpacts.Add(new SE.TerrainImpacts.BasicRandomAdjust());
-        ManagedTerrainImpacts.Add(new SE.TerrainImpacts.BasicToExtend());
-        ManagedTerrainImpacts.Add(new SE.TerrainImpacts.GenerateSmoothPlane());
+        long[] tt = new long[5] { 1000, 30 * 1000, 100 * 1000, 300 * 1000, 1000 * 1000 };
 
-        Dictionary<int, List<SE.TerrainUnitData.Impact.CollisionRegion>> ManagedTerrainCollisionRegions = new Dictionary<int, List<SE.TerrainUnitData.Impact.CollisionRegion>>();
+        SE.Pair<long, SE.RandomTree<ObjectGenerator.ObjectGenerateItem>>[] ManagedTerrainGenerateDataArray = new SE.Pair<long, SE.RandomTree<ObjectGenerator.ObjectGenerateItem>>[5];
+        for (int i = 0; i < 5; i++) {
+            ManagedTerrainGenerateDataArray[i] = new SE.Pair<long, SE.RandomTree<ObjectGenerator.ObjectGenerateItem>>(tt[i], new SE.RandomTree<ObjectGenerator.ObjectGenerateItem>(null,5));
+            ManagedTerrainGenerateDataArray[i].Second.Add(new SE.ObjectGenerateItems.Planes(tt[i] / 2), 1, 0, 1, -1);
+            ManagedTerrainGenerateDataArray[i].Second.Init();
+        }
+
+        List<SE.TerrainUnitData.Impact> ManagedTerrainImpacts = new List<SE.TerrainUnitData.Impact>();
+        ManagedTerrainImpacts.Add(new BasicSmooth());
+        ManagedTerrainImpacts.Add(new BasicRandomAdjust());
+        ManagedTerrainImpacts.Add(new BasicToExtend());
+        ManagedTerrainImpacts.Add(new ObjectGenerator(ref ManagedTerrainRegion, ManagedTerrainGenerateDataArray));
+        //ManagedTerrainImpacts.Add(new SE.TerrainImpacts.GenerateSmoothPlane());
+
+        Dictionary<int, List<SE.CollisionRegion>> ManagedTerrainCollisionRegions = new Dictionary<int, List<SE.CollisionRegion>>();
 
         SE.Kernel.RegistRootObject(
             "RootTerrain",
             new SE.TerrainManager.ManagedTerrain(
                 new SE.TerrainUnitData(
                     ref ManagedTerrainRegion,
-                    ref ManagedTerrainVertex,
-                    ref ManagedTerrainVertex,
-                    ref ManagedTerrainRandomSeed,
-                    ref ManagedTerrainImpacts,
-                    ref ManagedTerrainCollisionRegions
+                    ManagedTerrainVertex,
+                    ManagedTerrainVertex,
+                    ManagedTerrainRandomSeed,
+                    ManagedTerrainImpacts,
+                    ManagedTerrainCollisionRegions
                 ),
                 true
             ),
