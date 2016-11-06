@@ -1,6 +1,6 @@
 # SceneEngine
 
-A frame that can help you to easily build a random but only world in real time.
+A frame that can help you to build a random but only world in real time.
 
 ![Terrain](https://fdtemp.github.io/img/terrain.png)
 
