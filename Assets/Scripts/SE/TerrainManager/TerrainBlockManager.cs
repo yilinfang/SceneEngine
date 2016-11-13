@@ -96,7 +96,6 @@ namespace SE {
                     }
             }
 
-
             public static void ApplyBlockUpdate(ManagedTerrain.ApplyBlock Block) {
 
                 if (Block.StorageTreeRoot != null) {

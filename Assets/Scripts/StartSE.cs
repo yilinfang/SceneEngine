@@ -3,25 +3,12 @@ using System.Collections.Generic;
 using SE.TerrainImpacts;
 
 public class StartSE : MonoBehaviour {
-	
-	private static bool
 
-        Started = false;
+    private static bool Started = false;
+    private static GameObject Center;
+    private static SE.LongVector3 Position;
 
-    private static GameObject
-
-        Center;
-
-    private static SE.LongVector3
-
-        Position;
-
-    //SE.Objects.A a;
-
-    // Use this for initialization
     void Start() {
-        //SE.Control.QuickStart();
-
         if (!Started) {
             SE.Control.QuickStart();
             Started = true;
@@ -84,16 +71,6 @@ public class StartSE : MonoBehaviour {
             new SE.LongVector3(0, 0, 0),
             new Quaternion()
         );
-
-        //Center = new GameObject("SceneCenter");
-        //Position = new SE.LongVector3(0, 0, 0);
-        //SE.Kernel.SetTemporarySenceCenter(Position);
-        //Center.transform.localPosition = SE.Kernel.SEPositionToUnityPosition(Position);
-        //yield return new WaitForSeconds(10);
-
-        //Position = new SE.LongVector3(1000 * 1000, -1000 * 1000, 1000 * 1000);
-        //SE.Kernel.SetTemporarySenceCenter(Position);
-        //Center.transform.localPosition = SE.Kernel.SEPositionToUnityPosition(Position);
     }
 
 	~StartSE() {

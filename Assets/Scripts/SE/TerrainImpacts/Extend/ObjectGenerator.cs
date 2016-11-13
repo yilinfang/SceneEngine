@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿
 
 namespace SE.TerrainImpacts {
     public class ObjectGenerator : TerrainUnitData.Impact {
