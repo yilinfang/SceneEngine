@@ -7,7 +7,7 @@ namespace SE.ObjectGenerateItems {
 
         public Planes(long Size) { this.Size = Size; }
 
-        public override void Main(ref TerrainUnitData Data) {
+        public override object Start(ref TerrainUnitData Data) {
 
             Geometries.Rectangle<long> WholeRegion = Geometries.TransformToRegionCenter(Size, Size, ref Data.Region);
             CollisionRegion CollisionRegion = new TerrainImpacts.CollisionRegions.Rectangle(ref WholeRegion);
@@ -20,6 +20,8 @@ namespace SE.ObjectGenerateItems {
                 Data.Impacts.Add(new TerrainImpacts.SmoothPlane(WholeRegion, CentralRegion, Data.ExtendMap[4]));
                 Data.Impacts.Add(new TerrainImpacts.SmoothPlane(tWholeRegion, tCentralRegion, Data.ExtendMap[4] + Size / 16));
             }
+            return null;
         }
+        public override void Destroy(object StartOutput) { }
     }
 }

@@ -38,7 +38,7 @@ namespace SE.TerrainImpacts {
             }
         }
 
-        public override void Main(ref TerrainUnitData Data) {
+        public override System.Action Start(ref TerrainUnitData Data) {
 
             long
                 xmid = (Data.Region.x1 + Data.Region.x2) / 2,
@@ -49,6 +49,7 @@ namespace SE.TerrainImpacts {
             Operate(this, ref Data, 4, xmid, ymid);
             Operate(this, ref Data, 5, Data.Region.x2, ymid);
             Operate(this, ref Data, 7, xmid, Data.Region.y2);
+            return null;
         }
     }
 }

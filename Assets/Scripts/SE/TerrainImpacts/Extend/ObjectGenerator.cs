@@ -4,7 +4,8 @@ namespace SE.TerrainImpacts {
     public class ObjectGenerator : TerrainUnitData.Impact {
 
         abstract public class ObjectGenerateItem {
-            abstract public void Main(ref TerrainUnitData UnitData);
+            abstract public object Start(ref TerrainUnitData UnitData);
+            abstract public void Destroy(object StartOutput);
         }
 
         private Pair<long, RandomTree<ObjectGenerateItem>>[] GenerateDataArray;
@@ -32,16 +33,17 @@ namespace SE.TerrainImpacts {
             return -1;
         }
 
-        public override void Main(ref TerrainUnitData Data) {
+        public override System.Action Start(ref TerrainUnitData Data) {
             int Key = BinarySearch(
                 GenerateDataArray,
                 System.Math.Min(Data.Region.x2 - Data.Region.x1, Data.Region.y2 - Data.Region.y1)
             );
-            if (Key == -1) return;
+            if (Key == -1) return null;
             ObjectGenerateItem item = GenerateDataArray[Key].Second.GetLast((int)Data.Seed[0].NextRandomNum());
-            if (item == null) return;
+            if (item == null) return null;
             //UnityEngine.Debug.Log("item Main ran.");
-            item.Main(ref Data);
+            object StartOutput = item.Start(ref Data);
+            return delegate() { item.Destroy(StartOutput); };
         }
     }
 }

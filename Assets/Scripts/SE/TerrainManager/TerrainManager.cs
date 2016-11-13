@@ -189,10 +189,11 @@ namespace SE {
             //System.Threading.Thread.Sleep(250);
             Node.Map = new long[17, 17];
             Node.Child = new ManagedTerrain.CalculateNode[16, 16];
+            Node.DestroyCallBack = new List<System.Action>();
 
             TerrainUnitData TempData = new TerrainUnitData(ref Node.InitialData);
 
-            UnitCalculate(Node, ref TempData);
+            UnitCalculate(Node, ref TempData, Node.DestroyCallBack);
             //UnitCalculate(Node, 0, 0, 16, ref TempData);
 
             for (int i = 0; i < 17; i++)
@@ -207,10 +208,13 @@ namespace SE {
             CalculateNodeUpdate(Node);
         }
 
-        private static void UnitDataCalculate(ref TerrainUnitData UnitData) {
+        private static void UnitDataCalculate(ref TerrainUnitData UnitData, List<System.Action> DestroyCallBackList) {
 
-            for (int i = 0; i < UnitData.Impacts.Count; i++)
-                UnitData.Impacts[i].Main(ref UnitData);
+            for (int i = 0; i < UnitData.Impacts.Count; i++) {
+                System.Action CallBack = UnitData.Impacts[i].Start(ref UnitData);
+                if (CallBack != null)
+                    DestroyCallBackList.Add(CallBack);
+            }
         }
 
         private static void UnitDataApplyToNode(ref TerrainUnitData UnitData, ManagedTerrain.CalculateNode Node, ref Geometries.Square<byte> ArrayRegion) {
@@ -339,7 +343,7 @@ namespace SE {
             };
         }
 
-        private static void UnitCalculate(ManagedTerrain.CalculateNode Node, ref TerrainUnitData UnitData) {
+        private static void UnitCalculate(ManagedTerrain.CalculateNode Node, ref TerrainUnitData UnitData, List<System.Action> DestroyCallBackList) {
 
             Queue<Pair<TerrainUnitData, Geometries.Square<byte>>>
                 q = new Queue<Pair<TerrainUnitData, Geometries.Square<byte>>>();
@@ -355,7 +359,7 @@ namespace SE {
 
                 int half = now.Second.Length / 2;
 
-                UnitDataCalculate(ref now.First);
+                UnitDataCalculate(ref now.First, DestroyCallBackList);
 
                 UnitDataApplyToNode(ref now.First, Node, ref now.Second);
 
@@ -390,11 +394,14 @@ namespace SE {
 
             if (Node.Map == null) return;
 
+            for (int i = 0; i < Node.DestroyCallBack.Count; i++)
+                Node.DestroyCallBack[i]();
             UnitDestory(Node, ref Node.InitialData.Region);
             //UnitDestory(Node, 0, 0, 16, ref Node.InitialData.Region);
 
             Node.Map = null;
             Node.Child = null;
+            Node.DestroyCallBack = null;
 
             //UnityEngine.Debug.Log ("NodeDestory : ("+Node.InitialData.Region.x1+","+Node.InitialData.Region.x2+","+Node.InitialData.Region.y1+","+Node.InitialData.Region.y2+") Finished.");
         }

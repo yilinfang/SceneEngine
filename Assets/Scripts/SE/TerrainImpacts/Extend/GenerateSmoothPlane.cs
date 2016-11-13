@@ -8,7 +8,7 @@ namespace SE.TerrainImpacts {
             Region = new AffectedRegions.Whole();
         }
 
-        public override void Main(ref TerrainUnitData Data) {
+        public override System.Action Start(ref TerrainUnitData Data) {
 
             if (Data.Region.x2 - Data.Region.x1 > 5000 && Data.Region.x2 - Data.Region.x1 < 10000 && Data.Seed[0].NextRandomNum(10) == 1) {
 
@@ -23,6 +23,7 @@ namespace SE.TerrainImpacts {
                     Data.ExtendMap[4]+2 * 1000
                 ));
             }
+            return null;
         }
     }
 }

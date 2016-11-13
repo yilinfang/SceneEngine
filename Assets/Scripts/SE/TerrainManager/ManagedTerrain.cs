@@ -11,6 +11,8 @@ namespace SE {
 
                 public CalculateNode[,] Child = null;
 
+                public List<System.Action> DestroyCallBack = null;
+
                 //--------------------------------------------------------------------------------------
 
                 public ManagedTerrain ManagedTerrainRoot;
@@ -763,7 +765,7 @@ namespace SE {
                             TerrainData.size = TerrainDataSize;
                             TerrainData.SetHeightsDelayLOD(0, 0, TerrainDataHeightMap);
 
-                            UnityEngine.Object.DestroyImmediate(TerrainEntity);
+                            UnityEngine.Object.Destroy(TerrainEntity);
                             TerrainEntity = UnityEngine.Terrain.CreateTerrainGameObject(TerrainData);
 
                             if (ManagedTerrainRoot.SeparateFromFatherObject == false) {
@@ -784,7 +786,7 @@ namespace SE {
 
                     Thread.QueueOnMainThread(
                         delegate () {
-                            UnityEngine.Object.DestroyImmediate(TerrainEntity);
+                            UnityEngine.Object.Destroy(TerrainEntity);
                         }
                     );
                 }

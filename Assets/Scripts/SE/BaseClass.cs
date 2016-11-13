@@ -121,7 +121,7 @@ namespace SE  {
 
             public AffectedRegion Region;
 
-            abstract public void Main(ref TerrainUnitData Data);
+            abstract public Action Start(ref TerrainUnitData Data);
 
             virtual public Impact Clone(int Index, ref Geometries.Rectangle<long> Region) { throw new NotImplementedException(); }
 

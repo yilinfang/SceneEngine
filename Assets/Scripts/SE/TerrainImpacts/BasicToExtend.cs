@@ -7,8 +7,9 @@ namespace SE.TerrainImpacts {
             Region = new AffectedRegions.Whole();
         }
 
-        public override void Main(ref TerrainUnitData Data) {
+        public override System.Action Start(ref TerrainUnitData Data) {
             Data.ExtendMap = (long[])Data.BaseMap.Clone();
+            return null;
         }
     }
 }

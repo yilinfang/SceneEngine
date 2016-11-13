@@ -8,7 +8,7 @@ namespace SE.TerrainImpacts {
             Region = new AffectedRegions.Whole();
         }
 
-        public override void Main(ref TerrainUnitData Data) {
+        public override System.Action Start(ref TerrainUnitData Data) {
 
             long[] basemap = Data.BaseMap;
 
@@ -17,6 +17,7 @@ namespace SE.TerrainImpacts {
             basemap[4] = (basemap[0] + basemap[2] + basemap[6] + basemap[8]) / 4;
             basemap[5] = (basemap[2] + basemap[8]) / 2;
             basemap[7] = (basemap[6] + basemap[8]) / 2;
+            return null;
         }
     }
 }
