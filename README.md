@@ -4,6 +4,6 @@ A frame that can help you to build a random but only world in real time.
 
 ![Terrain](https://fdtemp.github.io/img/terrain.png)
 
-'<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a>进行许可。'
+本作品采用 [**GNU GPL V3开源协议**](https://github.com/fdtemp/SceneEngine/blob/master/LICENSE) 进行许可
 
-**P.S. 加上开源协议后突然感觉高大上了好多诶←_←**
+**P.S. 加上GPL开源协议后突然感觉高大上了好多诶 (逃**
