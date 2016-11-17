@@ -50,8 +50,8 @@ namespace SE  {
             virtual public void Start() { }
             virtual public void StartForUnity() { }
 
-            virtual public void Destory() { }
-            virtual public void DestoryForUnity() { }
+            virtual public void Destroy() { }
+            virtual public void DestroyForUnity() { }
         }
 
         public Object Father;
@@ -76,7 +76,7 @@ namespace SE  {
 
         public bool
 
-            CompulsoryCalculation = false,
+            CompulsoryCalculate = false,
 
             NeedUpdate = false;
 

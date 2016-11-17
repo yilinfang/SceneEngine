@@ -1,193 +1,166 @@
 using System.Collections.Generic;
 
 namespace SE {
-    public static partial class Kernel {
+    public class Kernel {
+        public class Settings {
+            //The preload range of the scene
+            public float PreloadRange = 20;
+            //The switch range of the scene center
+            public float SwitchRange_SceneCenter = 10;
+            //The switch range for coordinate origin (especially used in (SEPosition <=> UnityPosition) translation)
+            public float SwitchRange_CoordinateOrigin = 5 * 1000;
+            //The max range of the scene
+            public float VisibleRange = 10 * 1000;
+            //The max interval time limit for sence center updating (System.DateTime.Now.ToBinary())
+            public long SenceCenterUpdateIntervalMaxLimit = 10 * 1000;
+            //The max memory limit of the scene (UnityEngine.Profiler.GetTotalAllocatedMemory())
+            public long MemoryMaxLimit = 500 * 1024 * 1024;
+            //The min FPS limit of the scene
+            public float FPSMinLimit = 60;
+            //The time Interval between two Resources.UnloadUnusedAssets() calls
+            public float CleanAssetsInterval = 10f;
+        }
 
-        //Kernel运行产生的相关数据:
+        public Settings _Settings;
+        //The temporary scene center of the scene
+        private LongVector3 tSceneCenter;
+        //Current scene center of the scene
+        private LongVector3 SceneCenter;
+        //Current coordinate origin of the scene
+        private LongVector3 CoordinateOrigin;
+        //The last time changing the scene center
+        private long LastSceneCenterUpdateTime;
 
-        private static LongVector3
+        public UnityEngine.GameObject SEUnityRoot;
+        public Listeners.KernelListener Listener;
+        public Modules.ThreadManager ThreadManager;
+        public Modules.ObjectManager ObjectManager;
+        private IModule[] Modules;
+        private SBTree<Object> RootObjects;
+        private int MainThreadId;
 
-            TemporarySenceCenter = new LongVector3(0, 0, 0),
+        public Kernel(Settings Settings) {
+            _Settings = Settings;
+            tSceneCenter = new LongVector3(0, 0, 0);
+            SceneCenter = new LongVector3(0, 0, 0);
+            CoordinateOrigin = new LongVector3(0, 0, 0);
+            LastSceneCenterUpdateTime = 0;
 
-            CurrentCoordinateOrigin = new LongVector3(0, 0, 0);
-
-        public static LongVector3
-
-            CurrentSceneCenter { get; private set; }
-
-        private static float
-
-            CurrentFPS = 100;//当前的FPS
-
-        public static long
-
-            CurrentSceneMemory = 0,//场景占用的内存:包括各种组件及资源
-
-            LastSenceCenterUpdateTime = System.DateTime.Now.ToBinary();
-
-        public static long
-
-            MaxSenceCenterUpdateInterval = 5000 * 10000,//场景中心最大更新间隔ms
-
-            MemoryLimit = 200 * 1024 * 1024;
-
-        public static int
-
-            FPSLimit = 60,
-
-            ObjectThreadCalculateLimit = 200;
-
-        public static float
-
-            ObjectPrecisionLimit = 0.01F,//物体加载精度限制
-
-            SceneFullLoadRange = 10,//全加载距离(场景中心切换间距)m
-
-            SceneVisibleRange = 5 * 1000,//最大生成距离m
-
-            CoordinateOriginSwitchRange = 5 * 1000;//坐标原点切换距离m   (用于UnityPosition <=> SEPosition)
-
-        //------------------------------------------------------------------------------------------------------------------------
-
-        private static SBTree<Object>
-
+            SEUnityRoot = new UnityEngine.GameObject("SE");
+            Listener = SEUnityRoot.AddComponent<Listeners.KernelListener>();
+            Listener._UnloadInterval = _Settings.CleanAssetsInterval;
+            ThreadManager = null;
+            ObjectManager = null;
+            Modules = new IModule[0];
             RootObjects = new SBTree<Object>(new Comparers.KernelIDSmallFirstObjectComparer());
-
-        private static int 
-
-            EffectIndex = 0;
-
-        private static UnityEngine.GameObject
-
-            SEUnityRoot = null;
-
-        private static bool
-
-            Initialised = false;
-
-        private static object
-
-            LockForPositionTranslate = new object();
-
-        public static void Init() {
-
-            if (!Initialised) {
-
-                SEUnityRoot = new UnityEngine.GameObject(
-                    "SE",
-                    new System.Type[1] {
-                        typeof(SEUnityNodeListener)
-                    }
-                );
-
-                Thread.Init();
-
-                Initialised = true;
-            }
-            
-            //初始化子模块
-            ObjectManager.ThreadNeedAlive();
-
-            TerrainManager.ThreadNeedAlive();
+            MainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+        }
+        public void AssignThreadManager(Modules.ThreadManager tThreadManager) {
+            ThreadManager = tThreadManager;
+            ThreadManager._Assigned(this);
+        }
+        public void AssignObjectManager(Modules.ObjectManager tObjectManager) {
+            ObjectManager = tObjectManager;
+            ObjectManager._Assigned(this);
+        }
+        public void AssignModules(IModule[] tModules) {
+            Modules = tModules;
+            for (int i = 0; i < Modules.Length; i++)
+                Modules[i]._Assigned(this);
+        }
+        public void Start() {
+            if (ThreadManager == null) throw new System.Exception("Kernel : The ThreadManager is not assigned.");
+            if (ObjectManager == null) throw new System.Exception("Kernel : The ObjectManager is not assigned.");
+            ThreadManager._Start();
+            ObjectManager._Start();
+            for (int i = 0; i < Modules.Length; i++)
+                Modules[i]._Start();
+        }
+        public void Stop() {
+            for (int i = 0; i < Modules.Length; i++)
+                Modules[i]._Stop();
+            ObjectManager._Stop();
+            ThreadManager._Stop();
         }
 
-        public static void Stop() {
-
-            ObjectManager.ThreadNeedAliveCancel();
-
-            TerrainManager.ThreadNeedAliveCancel();
-        }
-
-        public static void RegistRootObject(string CharacteristicString, Object NewRootObject, LongVector3 Position, UnityEngine.Quaternion Quaternion) {
-
+        public void RegistRootObject(string CharacteristicString, Object NewRootObject, LongVector3 Position, UnityEngine.Quaternion Quaternion) {
             NewRootObject.CharacteristicString = CharacteristicString;
-
-            ObjectManager.Regist(null, NewRootObject, Position, Quaternion);
-
+            ObjectManager._Regist(null, NewRootObject, Position, Quaternion);
             lock (RootObjects)
                 RootObjects.Add(NewRootObject);
         }
-
-        public static void UnregistRootObject(Object OldRootObject) {
-
+        public void UnregistRootObject(Object OldRootObject) {
             lock (RootObjects)
                 RootObjects.Remove(OldRootObject);
-
-            ObjectManager.Unregist(OldRootObject);
+            ObjectManager._Unregist(OldRootObject);
         }
 
-        public static void SetTemporarySenceCenter(LongVector3 NewSenceCenter) {
-            lock (LockForPositionTranslate) {
+        public void SetSceneCenter(LongVector3 NewSceneCenter) {
 
-                TemporarySenceCenter = NewSenceCenter;
+            tSceneCenter = NewSceneCenter;
 
-                if (System.DateTime.Now.ToBinary() - LastSenceCenterUpdateTime > MaxSenceCenterUpdateInterval
-                    || (TemporarySenceCenter - CurrentSceneCenter).toVector3().magnitude > SceneFullLoadRange) {
+            if (System.DateTime.Now.ToBinary() - LastSceneCenterUpdateTime > _Settings.SenceCenterUpdateIntervalMaxLimit
+                || (tSceneCenter - SceneCenter).toVector3().magnitude > _Settings.SwitchRange_SceneCenter) {
 
-                    LastSenceCenterUpdateTime = System.DateTime.Now.ToBinary();
-                    CurrentSceneCenter = TemporarySenceCenter;
+                SceneCenter = tSceneCenter;
+                LastSceneCenterUpdateTime = System.DateTime.Now.ToBinary();
 
-                    if ((TemporarySenceCenter - CurrentCoordinateOrigin).toVector3().magnitude > CoordinateOriginSwitchRange) {
+                for (int i = 0; i < Modules.Length; i++)
+                    Modules[i]._ChangeSceneCenter(ref SceneCenter);
+                ObjectManager._ChangeSceneCenter(ref SceneCenter);
+                ThreadManager._ChangeSceneCenter(ref SceneCenter);
 
-                        //坐标原点的调整使用新线程防止堵塞
-                        //cause:需要等待其他线程结束
-                        Thread.Async(
-                            delegate () {
+                if ((SceneCenter - CoordinateOrigin).toVector3().magnitude > _Settings.SwitchRange_CoordinateOrigin) {
+                    //Attention: The position translate functions is only used in main thread
+                    //           and all positions in SE are SEPosition ( LongVector3 ), 
+                    //           so coordinate origin changing is thread safe.
+                    //           ( Actually there is only one main thread )
+                    ThreadManager.QueueOnMainThread(delegate () {
 
-                                ObjectManager.ThreadCompulsoryStop();
-                                TerrainManager.ThreadCompulsoryStop();
+                        CoordinateOrigin = SceneCenter;
 
-                                while (ObjectManager.Alive || TerrainManager.Alive)
-                                    System.Threading.Thread.Sleep(1);
+                        //Attention: Only the position of root object that need to be changed.
+                        foreach (var obj in RootObjects)
+                            if (obj.UnityRoot != null)
+                                obj.UnityRoot.transform.localPosition = Position_SEToUnity(ref obj.SEPosition);
 
-                                //切换到主线程中调整坐标原点并更新各元素坐标
-                                Thread.QueueOnMainThread(
-                                    delegate () {
-
-                                        //在更新结束前堵塞坐标转换函数
-                                        lock (LockForPositionTranslate) {
-
-                                            CurrentCoordinateOrigin = NewSenceCenter;
-
-                                            _ChangeCoordinateOrigin(CurrentCoordinateOrigin);
-                                        }
-
-                                        ObjectManager.ThreadCompulsoryStopCancel();
-                                        TerrainManager.ThreadCompulsoryStopCancel();
-                                    }
-                                );
-                            }
-                        );
-                    }
+                        for (int i = 0; i < Modules.Length; i++)
+                            Modules[i]._ChangeCoordinateOrigin(ref CoordinateOrigin);
+                        ObjectManager._ChangeCoordinateOrigin(ref CoordinateOrigin);//extend ?
+                        ThreadManager._ChangeCoordinateOrigin(ref CoordinateOrigin);
+                    });
                 }
             }
         }
 
-        public static UnityEngine.Vector3 SEPositionToUnityPosition(LongVector3 SEPosition) {
-            lock (LockForPositionTranslate) {
-                return (SEPosition - CurrentCoordinateOrigin).toVector3();
-            }
+        public UnityEngine.Vector3 Position_SEToUnity(LongVector3 SEPosition) {
+            if (MainThreadId != System.Threading.Thread.CurrentThread.ManagedThreadId)
+                throw new System.Exception("Kernel : position translation is only used in main thread.");
+            return (SEPosition - CoordinateOrigin).toVector3();
+        }
+        public UnityEngine.Vector3 Position_SEToUnity(ref LongVector3 SEPosition) {
+            if (MainThreadId != System.Threading.Thread.CurrentThread.ManagedThreadId)
+                throw new System.Exception("Kernel : position translation is only used in main thread.");
+            return (SEPosition - CoordinateOrigin).toVector3();
         }
 
-        public static LongVector3 UnityPositionToSEPosition(UnityEngine.Vector3 UnityPosition) {
-            lock (LockForPositionTranslate) {
-                return (new LongVector3(
-                    (long)(UnityPosition.x * 1000),
-                    (long)(UnityPosition.y * 1000),
-                    (long)(UnityPosition.z * 1000)
-                )) + CurrentCoordinateOrigin;
-            }
+        public LongVector3 Position_UnityToSE(UnityEngine.Vector3 UnityPosition) {
+            if (MainThreadId != System.Threading.Thread.CurrentThread.ManagedThreadId)
+                throw new System.Exception("Kernel : position translation is only used in main thread.");
+            return (new LongVector3(
+                (long)UnityPosition.x * 1000,
+                (long)UnityPosition.y * 1000,
+                (long)UnityPosition.z * 1000
+            )) + CoordinateOrigin;
         }
-
-        private static void _ChangeCoordinateOrigin(LongVector3 NewCoordinateOrigin) {
-
-            foreach (var obj in RootObjects)
-                if (obj.UnityRoot != null)
-                    obj.UnityRoot.transform.localPosition = (obj.SEPosition - NewCoordinateOrigin).toVector3();
-
-            TerrainManager._ChangeCoordinateOrigin(NewCoordinateOrigin);
-
-            //do other entities localposition change for CoordinateOrigin
+        public LongVector3 Position_UnityToSE(ref UnityEngine.Vector3 UnityPosition) {
+            if (MainThreadId != System.Threading.Thread.CurrentThread.ManagedThreadId)
+                throw new System.Exception("Kernel : position translation is only used in main thread.");
+            return (new LongVector3(
+                (long)UnityPosition.x * 1000,
+                (long)UnityPosition.y * 1000,
+                (long)UnityPosition.z * 1000
+            )) + CoordinateOrigin;
         }
     }
 }

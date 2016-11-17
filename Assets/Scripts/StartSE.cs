@@ -4,17 +4,22 @@ using SE.TerrainImpacts;
 
 public class StartSE : MonoBehaviour {
 
+    public static SE.Kernel SEKernel;
+
     private static bool Started = false;
     private static GameObject Center;
     private static SE.LongVector3 Position;
 
     void Start() {
-        if (!Started) {
-            SE.Control.QuickStart();
-            Started = true;
-        } else {
-            SE.Control.QuickReset();
-        }
+
+        SEKernel = new SE.Kernel(new SE.Kernel.Settings());
+        SEKernel.AssignThreadManager(new SE.Modules.ThreadManager());
+        SE.Modules.ObjectManager om = new SE.Modules.ObjectManager(new SE.Modules.ObjectManager.Settings());
+        om.AssignObjectUpdateManager(new SE.Modules.ObjectUpdateManager(new SE.Modules.ObjectUpdateManager.Settings()));
+        SEKernel.AssignObjectManager(om);
+        SE.Modules.TerrainManager tm = new SE.Modules.TerrainManager(new SE.Modules.TerrainManager.Settings());
+        SEKernel.AssignModules(new SE.IModule[1] { tm, });
+        SEKernel.Start();
 
         SE.Geometries.Rectangle<long> ManagedTerrainRegion = new SE.Geometries.Rectangle<long>(
             0, 1000 * 1000 * 1000,
@@ -50,14 +55,24 @@ public class StartSE : MonoBehaviour {
         ManagedTerrainImpacts.Add(new BasicSmooth());
         ManagedTerrainImpacts.Add(new BasicRandomAdjust());
         ManagedTerrainImpacts.Add(new BasicToExtend());
-        ManagedTerrainImpacts.Add(new ObjectGenerator(ref ManagedTerrainRegion, ManagedTerrainGenerateDataArray));
+        ManagedTerrainImpacts.Add(new ObjectGenerator(
+            ref ManagedTerrainRegion,
+            ManagedTerrainGenerateDataArray
+        ));
+        //ManagedTerrainImpacts.Add(new WaterGenerator(
+        //    new WaterGenerator.StandardWaterFactory("Prefabs/MyWater"),
+        //    ref ManagedTerrainRegion,
+        //    10 * 1000,
+        //    10 * 1000
+        //));
         //ManagedTerrainImpacts.Add(new SE.TerrainImpacts.GenerateSmoothPlane());
 
         Dictionary<int, List<SE.CollisionRegion>> ManagedTerrainCollisionRegions = new Dictionary<int, List<SE.CollisionRegion>>();
 
-        SE.Kernel.RegistRootObject(
+        SEKernel.RegistRootObject(
             "RootTerrain",
-            new SE.TerrainManager.ManagedTerrain(
+            new SE.Modules.TerrainManager.ManagedTerrain(
+                tm,
                 new SE.TerrainUnitData(
                     ref ManagedTerrainRegion,
                     ManagedTerrainVertex,
@@ -74,10 +89,6 @@ public class StartSE : MonoBehaviour {
     }
 
 	~StartSE() {
-		if (Started) {
-			Debug.Log ("SE Stop.");
-			SE.Control.QuickReset ();
-			Started = false;
-		}
+        SEKernel.Stop();
     }
 }

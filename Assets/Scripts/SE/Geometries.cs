@@ -83,6 +83,14 @@ namespace SE {
                 };
         }
 
+        public static bool Compare(ref Rectangle<long> a, ref Rectangle<long> b) {
+            return (a.x1 == b.x1 && a.x2 == b.x2 && a.y1 == b.y1 && a.y2 == b.y2);
+        }
+
+        public static long MaxLength(ref Rectangle<long> a) {
+            return (System.Math.Max(a.x2 - a.x1, a.y2 - a.y1));
+        }
+
         public static bool OverLapped(ref Rectangle<long> a, ref Rectangle<long> b) {
 
             if (((a.x1 <= b.x1 && b.x1 <= a.x2) || (a.x1 <= b.x2 && b.x2 <= a.x2))

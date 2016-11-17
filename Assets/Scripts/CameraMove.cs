@@ -51,8 +51,7 @@ public class CameraMove : MonoBehaviour {
             GetComponent<Camera>().transform.localPosition = new Vector3(0, m_distance, 0);
         }
 
-        SE.Kernel.SetTemporarySenceCenter(SE.Kernel.UnityPositionToSEPosition(transform.position));
-        transform.localPosition = SE.Kernel.SEPositionToUnityPosition(SE.Kernel.UnityPositionToSEPosition(transform.position));
+        StartSE.SEKernel.SetSceneCenter(StartSE.SEKernel.Position_UnityToSE(transform.position));
     }
 
     //规划角度;
