@@ -310,7 +310,6 @@ namespace SE.Modules {
                     && now.First.Region.y2 - now.First.Region.y1 <= _Settings.UnitSizeMinLimit * 2)
                     continue;
 
-                int half = now.Second.Length / 2;
                 UnitDataCalculate(ref now.First, DestroyCallBackList);
                 UnitDataApplyToNode(ref now.First, Node, ref now.Second);
                 TerrainUnitData[] ChildUnitData = UnitDataSplit(ref now.First);
@@ -628,27 +627,29 @@ namespace SE.Modules {
             //new & set Terrain
 
             Kernel.Threading.QueueOnMainThread(delegate () {
+                ApplyBlock _Block = Block;
                 UnityEngine.TerrainData TerrainData = new UnityEngine.TerrainData();
                 TerrainData.heightmapResolution = TerrainDataHeightMapDetail;
                 TerrainData.baseMapResolution = TerrainDataHeightMapDetail;
                 TerrainData.size = TerrainDataSize;
                 TerrainData.SetHeightsDelayLOD(0, 0, TerrainDataHeightMap);
 
-                UnityEngine.Object.Destroy(Block.TerrainEntity);
-                Block.TerrainEntity = UnityEngine.Terrain.CreateTerrainGameObject(TerrainData);
+                UnityEngine.Object.DestroyImmediate(_Block.TerrainEntity);
+                _Block.TerrainEntity = UnityEngine.Terrain.CreateTerrainGameObject(TerrainData);
 
-                if (Block.ManagedTerrainRoot.SeparateFromFatherObject == false) {
-                    Block.TerrainEntity.transform.parent = Block.ManagedTerrainRoot.UnityRoot.transform;
-                    Block.TerrainEntity.transform.localPosition = TerrainLocalPosition.toVector3();
+                if (_Block.ManagedTerrainRoot.SeparateFromFatherObject == false) {
+                    _Block.TerrainEntity.transform.parent = _Block.ManagedTerrainRoot.UnityRoot.transform;
+                    _Block.TerrainEntity.transform.localPosition = TerrainLocalPosition.toVector3();
                 } else {
-                    Block.TerrainEntity.transform.localPosition = Kernel.Position_SEToUnity(Block.ManagedTerrainRoot.SEPosition + TerrainLocalPosition);
+                    _Block.TerrainEntity.transform.localPosition = Kernel.Position_SEToUnity(_Block.ManagedTerrainRoot.SEPosition + TerrainLocalPosition);
                 }
             });
         }
         public void RemoveTerrainEntity(ApplyBlock Block) {
             Kernel.Threading.QueueOnMainThread(delegate () {
                 //if (Block.TerrainEntity == null) UnityEngine.Debug.Log("Block.TerrainEntity is null!!!!!");
-                UnityEngine.Object.Destroy(Block.TerrainEntity);
+                ApplyBlock _Block = Block;
+                UnityEngine.Object.DestroyImmediate(_Block.TerrainEntity);
             });
         }
 
