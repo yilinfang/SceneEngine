@@ -1,4 +1,6 @@
-﻿namespace System.Collections.Generic {
+﻿
+
+namespace System.Collections.Generic {
     public class PriorityQueue<T> {
         IComparer<T> comparer;
         T[] heap;

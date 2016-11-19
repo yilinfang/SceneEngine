@@ -40,7 +40,7 @@ namespace SE.Comparers {
 
     public class CharacteristicStringSmallFirstObjectComparer : IComparer<Object> {
         public int Compare(Object a, Object b) {
-            return string.Compare(a.CharacteristicString, b.CharacteristicString);
+            return string.Compare(a.ChStr, b.ChStr);
         }
     }
 }

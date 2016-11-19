@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Generic.LockFree;
 
 namespace SE.Modules {
     public class ObjectUpdateManager : IModule {
@@ -14,7 +15,7 @@ namespace SE.Modules {
 
         public Settings _Settings;
         private SBTree<Object> ObjectHeap;
-        private List<Pair<bool, Object>> OperateList;
+        private LockFreeQueue<Pair<bool, Object>> OperateQueue;
 
         private object ThreadControlLock;
         private bool NeedAlive, Alive;
@@ -23,7 +24,7 @@ namespace SE.Modules {
         public ObjectUpdateManager(Settings Settings) {
             _Settings = Settings;
             ObjectHeap = new SBTree<Object>(new Comparers.KernelIDSmallFirstObjectComparer());
-            OperateList = new List<Pair<bool, Object>>();
+            OperateQueue = new LockFreeQueue<Pair<bool, Object>>();
             ThreadControlLock = new object();
             NeedAlive = false;
             Alive = false;
@@ -35,7 +36,7 @@ namespace SE.Modules {
                     throw new System.Exception("Object Update Manager : Thread is already started.");
                 } else {
                     NeedAlive = true;
-                    Kernel.ThreadManager.Async(UpdateThread);
+                    Kernel.Threading.Async(UpdateThread);
                 }
         }
         public void _ChangeSceneCenter(ref LongVector3 Position) { }
@@ -52,13 +53,11 @@ namespace SE.Modules {
 
         public void Regist(Object NewObject) {
             NewObject.LastUpdateTime = System.DateTime.Now.ToBinary();
-            lock (OperateList)
-                OperateList.Add(new Pair<bool, Object>(OPERATOR_ADD, NewObject));
+            OperateQueue.Enqueue(new Pair<bool, Object>(OPERATOR_ADD, NewObject));
         }
 
         public void Unregist(Object OldObject) {
-            lock (OperateList)
-                OperateList.Add(new Pair<bool, Object>(OPERATOR_REMOVE, OldObject));
+            OperateQueue.Enqueue(new Pair<bool, Object>(OPERATOR_REMOVE, OldObject));
         }
 
         private bool ObjectUpdateTimeIsReached(Object obj, long CurrentTime) {
@@ -73,19 +72,12 @@ namespace SE.Modules {
                     WaitList = new List<System.Threading.WaitHandle>();
 
                 while (NeedAlive) {
-                    //操作Object
-                    if (OperateList.Count != 0) {
-                        Pair<bool, Object>[] TempArray;
-
-                        lock (OperateList) {
-                            TempArray = OperateList.ToArray();
-                            OperateList.Clear();
-                        }
-                        for (int i = 0; i < TempArray.Length; i++)
-                            if (TempArray[i].First == OPERATOR_ADD)
-                                ObjectHeap.Add(TempArray[i].Second);
-                            else
-                                ObjectHeap.Remove(TempArray[i].Second);
+                    Pair<bool, Object> temp;
+                    while (OperateQueue.Dequeue(out temp)) {
+                        if (temp.First == OPERATOR_ADD)
+                            ObjectHeap.Add(temp.Second);
+                        else
+                            ObjectHeap.Remove(temp.Second);
                     }
 
                     //Call Object.Update() asynchronously
@@ -95,7 +87,7 @@ namespace SE.Modules {
                         Object obj = ObjectHeap.First();
                         System.Threading.AutoResetEvent flag = new System.Threading.AutoResetEvent(false);
                         WaitList.Add(flag);
-                        Kernel.ThreadManager.AsyncInPool(delegate () {
+                        Kernel.Threading.AsyncInPool(delegate () {
                             obj.LastUpdateTime = System.DateTime.Now.ToBinary();
                             obj.Update();
                             flag.Set();

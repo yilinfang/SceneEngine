@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 
 namespace SE {
-    public class Kernel {
+    public partial class Kernel {
         public class Settings {
             //The preload range of the scene
-            public float PreloadRange = 20;
+            public float PreloadRange = 10;
             //The switch range of the scene center
             public float SwitchRange_SceneCenter = 10;
             //The switch range for coordinate origin (especially used in (SEPosition <=> UnityPosition) translation)
@@ -33,8 +33,8 @@ namespace SE {
 
         public UnityEngine.GameObject SEUnityRoot;
         public Listeners.KernelListener Listener;
-        public Modules.ThreadManager ThreadManager;
-        public Modules.ObjectManager ObjectManager;
+        public ThreadManager Threading;
+        public IObjectManager ObjectManager;
         private IModule[] Modules;
         private SBTree<Object> RootObjects;
         private int MainThreadId;
@@ -49,17 +49,13 @@ namespace SE {
             SEUnityRoot = new UnityEngine.GameObject("SE");
             Listener = SEUnityRoot.AddComponent<Listeners.KernelListener>();
             Listener._UnloadInterval = _Settings.CleanAssetsInterval;
-            ThreadManager = null;
             ObjectManager = null;
             Modules = new IModule[0];
             RootObjects = new SBTree<Object>(new Comparers.KernelIDSmallFirstObjectComparer());
             MainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+            Threading = new ThreadManager(this);
         }
-        public void AssignThreadManager(Modules.ThreadManager tThreadManager) {
-            ThreadManager = tThreadManager;
-            ThreadManager._Assigned(this);
-        }
-        public void AssignObjectManager(Modules.ObjectManager tObjectManager) {
+        public void AssignObjectManager(IObjectManager tObjectManager) {
             ObjectManager = tObjectManager;
             ObjectManager._Assigned(this);
         }
@@ -69,9 +65,8 @@ namespace SE {
                 Modules[i]._Assigned(this);
         }
         public void Start() {
-            if (ThreadManager == null) throw new System.Exception("Kernel : The ThreadManager is not assigned.");
-            if (ObjectManager == null) throw new System.Exception("Kernel : The ObjectManager is not assigned.");
-            ThreadManager._Start();
+            if (ObjectManager == null)
+                throw new System.Exception("Kernel : The ObjectManager is not assigned.");
             ObjectManager._Start();
             for (int i = 0; i < Modules.Length; i++)
                 Modules[i]._Start();
@@ -80,11 +75,10 @@ namespace SE {
             for (int i = 0; i < Modules.Length; i++)
                 Modules[i]._Stop();
             ObjectManager._Stop();
-            ThreadManager._Stop();
         }
 
-        public void RegistRootObject(string CharacteristicString, Object NewRootObject, LongVector3 Position, UnityEngine.Quaternion Quaternion) {
-            NewRootObject.CharacteristicString = CharacteristicString;
+        public void RegistRootObject(string ChStr, Object NewRootObject, LongVector3 Position, UnityEngine.Quaternion Quaternion) {
+            NewRootObject.ChStr = ChStr;
             ObjectManager._Regist(null, NewRootObject, Position, Quaternion);
             lock (RootObjects)
                 RootObjects.Add(NewRootObject);
@@ -108,14 +102,13 @@ namespace SE {
                 for (int i = 0; i < Modules.Length; i++)
                     Modules[i]._ChangeSceneCenter(ref SceneCenter);
                 ObjectManager._ChangeSceneCenter(ref SceneCenter);
-                ThreadManager._ChangeSceneCenter(ref SceneCenter);
 
                 if ((SceneCenter - CoordinateOrigin).toVector3().magnitude > _Settings.SwitchRange_CoordinateOrigin) {
                     //Attention: The position translate functions is only used in main thread
                     //           and all positions in SE are SEPosition ( LongVector3 ), 
                     //           so coordinate origin changing is thread safe.
                     //           ( Actually there is only one main thread )
-                    ThreadManager.QueueOnMainThread(delegate () {
+                    Threading.QueueOnMainThread(delegate () {
 
                         CoordinateOrigin = SceneCenter;
 
@@ -127,7 +120,6 @@ namespace SE {
                         for (int i = 0; i < Modules.Length; i++)
                             Modules[i]._ChangeCoordinateOrigin(ref CoordinateOrigin);
                         ObjectManager._ChangeCoordinateOrigin(ref CoordinateOrigin);//extend ?
-                        ThreadManager._ChangeCoordinateOrigin(ref CoordinateOrigin);
                     });
                 }
             }

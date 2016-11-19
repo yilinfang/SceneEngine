@@ -13,7 +13,6 @@ public class StartSE : MonoBehaviour {
     void Start() {
 
         SEKernel = new SE.Kernel(new SE.Kernel.Settings());
-        SEKernel.AssignThreadManager(new SE.Modules.ThreadManager());
         SE.Modules.ObjectManager om = new SE.Modules.ObjectManager(new SE.Modules.ObjectManager.Settings());
         om.AssignObjectUpdateManager(new SE.Modules.ObjectUpdateManager(new SE.Modules.ObjectUpdateManager.Settings()));
         SEKernel.AssignObjectManager(om);

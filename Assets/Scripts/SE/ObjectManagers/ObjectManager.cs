@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Generic.LockFree;
 
 namespace SE.Modules {
-    public class ObjectManager : IModule {
+    public class ObjectManager : IObjectManager {
         public class Settings {
             //The max task amount limit per loop for object calculating (anti-block)
             public int LoopTaskMaxLimit = 200;
@@ -19,7 +20,7 @@ namespace SE.Modules {
         private ObjectUpdateManager ObjectUpdateManager;
         private SceneCenter SceneCenter, tSceneCenter;
         private SBTree<Object> RecycleHeap, CalculateHeap;
-        private List<Pair<bool, Object>> OperateList;
+        private LockFreeQueue<Pair<bool, Object>> OperateQueue;
         private int ObjectIndex;
 
         private long LastSenceCenterUpdateTime;
@@ -33,7 +34,7 @@ namespace SE.Modules {
             tSceneCenter = null;
             RecycleHeap = new SBTree<Object>(new Comparers.MaintainEvaluationSmallFirstObjectComparer());
             CalculateHeap = new SBTree<Object>(new Comparers.MaintainEvaluationBigFirstObjectComparer());
-            OperateList = new List<Pair<bool, Object>>();
+            OperateQueue = new LockFreeQueue<Pair<bool, Object>>();
             LastSenceCenterUpdateTime = 0;
             NeedAlive = false;
             Alive = false;
@@ -54,7 +55,7 @@ namespace SE.Modules {
                     throw new System.Exception("Object Manager : Thread is already started.");
                 } else {
                     NeedAlive = true;
-                    Kernel.ThreadManager.Async(CalculateThread);
+                    Kernel.Threading.Async(CalculateThread);
                     ObjectUpdateManager._Start();
                 }
         }
@@ -88,7 +89,7 @@ namespace SE.Modules {
             if (Child.NeedUpdate)
                 ObjectUpdateManager.Regist(Child);
             if (Child.Lod != null) {
-                Kernel.ThreadManager.QueueOnMainThread(delegate () {
+                Kernel.Threading.QueueOnMainThread(delegate () {
                     Child.UnityRoot = new UnityEngine.GameObject("Kernel_" + Child.KernelID);
                     if (Father == null)
                         Child.UnityRoot.transform.SetParent(Kernel.SEUnityRoot.transform);
@@ -100,8 +101,7 @@ namespace SE.Modules {
                     Child.UnityGlobalPosition = Child.UnityRoot.transform.position;
                     Child.MaintainEvaluation = SceneCenter.Evaluate(Child);
                 });
-                lock (OperateList)
-                    OperateList.Add(new Pair<bool, Object>(OPERATOR_ADD, Child));
+                OperateQueue.Enqueue(new Pair<bool, Object>(OPERATOR_ADD, Child));
             }
         }
 
@@ -110,8 +110,7 @@ namespace SE.Modules {
             if (OldObject.NeedUpdate)
                 ObjectUpdateManager.Unregist(OldObject);
             if (OldObject.Lod != null)
-                lock (OperateList)
-                    OperateList.Add(new Pair<bool, Object>(OPERATOR_REMOVE, OldObject));
+                OperateQueue.Enqueue(new Pair<bool, Object>(OPERATOR_REMOVE, OldObject));
         }
 
         //无法降低精度只有一种情况:
@@ -124,7 +123,7 @@ namespace SE.Modules {
         private void CancelCurrentLodCase(Object obj) {
             obj.Lod[obj.CurrentLodCaseIndex].ObjectRoot = null;
             obj.Lod[obj.CurrentLodCaseIndex].Destroy();
-            Kernel.ThreadManager.QueueOnMainThread(delegate () {
+            Kernel.Threading.QueueOnMainThread(delegate () {
                 obj.Lod[obj.CurrentLodCaseIndex].DestroyForUnity();
             });
             obj.CurrentLodCaseIndex = 0;
@@ -136,7 +135,7 @@ namespace SE.Modules {
             obj.Lod[NewLodCaseIndex].ObjectRoot = obj;
             obj.CurrentLodCaseIndex = NewLodCaseIndex;
             obj.Lod[NewLodCaseIndex].Start();
-            Kernel.ThreadManager.QueueOnMainThread(delegate () {
+            Kernel.Threading.QueueOnMainThread(delegate () {
                 obj.Lod[NewLodCaseIndex].StartForUnity();
             });
         }
@@ -151,29 +150,22 @@ namespace SE.Modules {
                 lock (ThreadControlLock) Alive = true;
 
                 while (NeedAlive) {
-                    //新加入的Object
-                    if (OperateList.Count != 0) {
-                        Pair<bool, Object>[] TempPairArray;
-
-                        lock (OperateList) {
-                            TempPairArray = OperateList.ToArray();
-                            OperateList.Clear();
+                    Pair<bool, Object> temp;
+                    while (OperateQueue.Dequeue(out temp)) {
+                        if (temp.First == OPERATOR_ADD && temp.Second.Lod.Length > 1) {
+                            CalculateHeap.Add(temp.Second);
+                        } else {
+                            Object obj = temp.Second;
+                            //CalculateHeap
+                            if (obj.CurrentLodCaseIndex < obj.Lod.Length - 1)
+                                CalculateHeap.Remove(obj);
+                            //RecycleHeap
+                            if (obj.CurrentLodCaseIndex > 0)
+                                RecycleHeap.Remove(obj);
+                            Kernel.Threading.QueueOnMainThread(delegate () {
+                                UnityEngine.Object.Destroy(obj.UnityRoot);
+                            });
                         }
-                        for (int i = 0; i < TempPairArray.Length; i++)
-                            if (TempPairArray[i].First == OPERATOR_ADD && TempPairArray[i].Second.Lod.Length > 1) {
-                                CalculateHeap.Add(TempPairArray[i].Second);
-                            } else {
-                                Object obj = TempPairArray[i].Second;
-                                //CalculateHeap
-                                if (obj.CurrentLodCaseIndex < obj.Lod.Length - 1)
-                                    CalculateHeap.Remove(obj);
-                                //RecycleHeap
-                                if (obj.CurrentLodCaseIndex > 0)
-                                    RecycleHeap.Remove(obj);
-                                Kernel.ThreadManager.QueueOnMainThread(delegate () {
-                                    UnityEngine.Object.Destroy(obj.UnityRoot);
-                                });
-                            }
                     }
 
                     Object[] TempArray;

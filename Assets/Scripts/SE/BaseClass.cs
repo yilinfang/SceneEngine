@@ -6,32 +6,17 @@ namespace SE  {
 
     /// <summary>
     /// 场景维护的基本单位,重写的元素有:
-    /// CompulsoryCalculation,
-    /// NeedUpdate,
-    /// CenterAdjust,
-    /// Range,
-    /// Lod,
-    /// UpdateInterval,
-    /// Start(),
-    /// Update(),
-    /// Destory().
+    /// CompulsoryCalculation
+    /// NeedUpdate
+    /// CenterAdjust
+    /// Range
+    /// Lod
+    /// UpdateInterval
+    /// Start()
+    /// Update()
+    /// Destory()
     /// </summary>
     abstract public class Object {
-
-        abstract public class ChildManager {
-
-            public Object ObjectRoot;
-
-            abstract public void Add(string CharacteristicString, Object NewObject, LongVector3 LocalPosition = default(LongVector3), Quaternion LocalQuaternion = default(Quaternion));
-
-            abstract public Object this[string CharacteristicString] { get; }
-
-            abstract public Object Get(string CharacteristicString);
-
-            abstract public void Remove(Object OldObject);
-
-            abstract public void Clear();
-        }
 
         /// <summary>
         /// 场景的实际组成元素,重写的元素有:
@@ -72,7 +57,7 @@ namespace SE  {
 
         //------------------------------------------------------------------------
 
-        public string CharacteristicString;
+        public string ChStr;
 
         public bool
 
@@ -86,7 +71,7 @@ namespace SE  {
 
         public LodCase[] Lod = null;
 
-        public ChildManager Child = null;
+        public IChildManager Child = null;
 
         virtual public void Start() { }
 

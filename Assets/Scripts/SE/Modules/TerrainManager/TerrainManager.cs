@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Generic.LockFree;
 
 namespace SE.Modules {
     public partial class TerrainManager : IModule {
@@ -39,9 +40,9 @@ namespace SE.Modules {
             //The max size limit of terrain block size (mm)
             public long BlockSizeMaxLimit = 1000 * 1000;
             //The max task amount limit per loop for terrain block applying (anti-block)
-            public long ApplyLoopTaskMaxLimit = 10;
+            public long ApplyLoopTaskMaxLimit = 8;
             //The max task amount limit per loop for terrain block recycling (anti-block)
-            public long ApplyLoopAppendRecycleTaskMaxLimit = 10;
+            public long ApplyLoopAppendRecycleTaskMaxLimit = 8;
         }
 
         /*
@@ -55,8 +56,8 @@ namespace SE.Modules {
             OPERATOR_REMOVE = false;
 
         public Settings _Settings;
-        private List<Pair<bool, ManagedTerrain>> CalculateOperateList;
-        private List<Group<bool, ManagedTerrain, Geometries.Point<long,long>[]>> ApplyOperateList;
+        private LockFreeQueue<Pair<bool, ManagedTerrain>> CalculateOperateQueue;
+        private LockFreeQueue<Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>> ApplyOperateQueue;
         private static SBTree<ManagedTerrain> ManagedTerrains;
         private static SceneCenter CalculateSceneCenter, ApplySceneCenter, tCalculateSceneCenter, tApplySceneCenter;
 
@@ -66,8 +67,8 @@ namespace SE.Modules {
 
         public TerrainManager(Settings Settings) {
             _Settings = Settings;
-            CalculateOperateList = new List<Pair<bool, ManagedTerrain>>();
-            ApplyOperateList = new List<Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>>();
+            CalculateOperateQueue = new LockFreeQueue<Pair<bool, ManagedTerrain>>();
+            ApplyOperateQueue = new LockFreeQueue<Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>>();
             ManagedTerrains = new SBTree<ManagedTerrain>(new KernelIDSmallFirstManagedTerrainComparer());
             CalculateSceneCenter = null;
             ApplySceneCenter = null;
@@ -89,8 +90,8 @@ namespace SE.Modules {
                     throw new System.Exception("Terrain Manager : Thread is already started.");
                 } else {
                     NeedAlive = true;
-                    Kernel.ThreadManager.Async(CalculateThread);
-                    Kernel.ThreadManager.Async(ApplyThread);
+                    Kernel.Threading.Async(CalculateThread);
+                    Kernel.Threading.Async(ApplyThread);
                 }
         }
         public void _ChangeSceneCenter(ref LongVector3 Position) {
@@ -131,12 +132,10 @@ namespace SE.Modules {
         }
 
         public void _Regist(ManagedTerrain NewManagedTerrain) {
-            lock (CalculateOperateList)
-                CalculateOperateList.Add(new Pair<bool, ManagedTerrain>(OPERATOR_ADD, NewManagedTerrain));
+            CalculateOperateQueue.Enqueue(new Pair<bool, ManagedTerrain>(OPERATOR_ADD, NewManagedTerrain));
         }
         public void _Unregist(ManagedTerrain NewManagedTerrain) {
-            lock (CalculateOperateList)
-                CalculateOperateList.Add(new Pair<bool, ManagedTerrain>(OPERATOR_REMOVE, NewManagedTerrain));
+            CalculateOperateQueue.Enqueue(new Pair<bool, ManagedTerrain>(OPERATOR_REMOVE, NewManagedTerrain));
         }
 
         private void Update(CalculateNode Node) {
@@ -405,38 +404,33 @@ namespace SE.Modules {
                 UnityEngine.Debug.Log("TerrainManager CalculateThread Start.");
 
                 PriorityQueue<CalculateNode>
-				    q = new PriorityQueue<CalculateNode>(new KeyBigFirstCalculateNodeComparer());
+                    q = new PriorityQueue<CalculateNode>(new KeyBigFirstCalculateNodeComparer());
                 while (NeedAlive) {
-                    Pair<bool, ManagedTerrain>[] TempArray;
-                    if (CalculateOperateList.Count != 0) {
-                        lock (CalculateOperateList) {
-                            TempArray = CalculateOperateList.ToArray();
-                            CalculateOperateList.Clear();
+                    Pair<bool, ManagedTerrain> temp;
+                    while (CalculateOperateQueue.Dequeue(out temp)) {
+                        if (temp.First == OPERATOR_ADD) {
+                            TerrainUnitData d = temp.Second.InitialData;
+                            Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[4] {
+                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y1,d.BaseMap[0]),
+                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y1,d.BaseMap[2]),
+                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y2,d.BaseMap[6]),
+                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.BaseMap[8]),
+                                };
+                            _Regist(temp.Second.CalculateNodeRoot.ManagedTerrainRoot, Points);
+                            lock (ManagedTerrains)
+                                ManagedTerrains.Add(temp.Second);
+                        } else {
+                            TerrainUnitData d = temp.Second.InitialData;
+                            Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[4] {
+                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y1,d.BaseMap[0]),
+                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y1,d.BaseMap[2]),
+                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y2,d.BaseMap[6]),
+                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.BaseMap[8]),
+                                };
+                            _Unregist(temp.Second.CalculateNodeRoot.ManagedTerrainRoot, Points);
+                            lock (ManagedTerrains)
+                                ManagedTerrains.Remove(temp.Second);
                         }
-                        for (int i = 0; i < TempArray.Length; i++)
-                            if (TempArray[i].First == OPERATOR_ADD) {
-                                TerrainUnitData d = TempArray[i].Second.InitialData;
-                                Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[4] {
-                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y1,d.BaseMap[0]),
-                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y1,d.BaseMap[2]),
-                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y2,d.BaseMap[6]),
-                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.BaseMap[8]),
-                                };
-                                _Regist(TempArray[i].Second.CalculateNodeRoot.ManagedTerrainRoot, Points);
-                                lock (ManagedTerrains)
-                                    ManagedTerrains.Add(TempArray[i].Second);
-                            } else {
-                                TerrainUnitData d = TempArray[i].Second.InitialData;
-                                Geometries.Point<long, long>[] Points = new Geometries.Point<long, long>[4] {
-                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y1,d.BaseMap[0]),
-                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y1,d.BaseMap[2]),
-                                    new Geometries.Point<long,long>(d.Region.x1,d.Region.y2,d.BaseMap[6]),
-                                    new Geometries.Point<long,long>(d.Region.x2,d.Region.y2,d.BaseMap[8]),
-                                };
-                                _Unregist(TempArray[i].Second.CalculateNodeRoot.ManagedTerrainRoot, Points);
-                                lock (ManagedTerrains)
-                                    ManagedTerrains.Remove(TempArray[i].Second);
-                            }
                     }
 
                     if (tCalculateSceneCenter != null) {
@@ -498,7 +492,7 @@ namespace SE.Modules {
                     }
 
                     //if (ReviseCounter <= _Settings.CalculateLoopTaskMaxLimit)
-                        System.Threading.Thread.Sleep(100);
+                    System.Threading.Thread.Sleep(100);
                 }
 
                 UnityEngine.Debug.Log("TerrainManager CalculateThread Quit.");
@@ -509,12 +503,10 @@ namespace SE.Modules {
         }
 
         private void _Regist(ManagedTerrain ManagedTerrainRoot, Geometries.Point<long, long>[] Points) {
-            lock (ApplyOperateList)
-                ApplyOperateList.Add(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_ADD, ManagedTerrainRoot, Points));
+            ApplyOperateQueue.Enqueue(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_ADD, ManagedTerrainRoot, Points));
         }
         private void _Unregist(ManagedTerrain ManagedTerrainRoot, Geometries.Point<long, long>[] Points) {
-            lock (ApplyOperateList)
-                ApplyOperateList.Add(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_REMOVE, ManagedTerrainRoot, Points));
+            ApplyOperateQueue.Enqueue(new Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>(OPERATOR_REMOVE, ManagedTerrainRoot, Points));
         }
 
         private void Update(ApplyBlock Block) {
@@ -635,7 +627,7 @@ namespace SE.Modules {
 
             //new & set Terrain
 
-            Kernel.ThreadManager.QueueOnMainThread(delegate () {
+            Kernel.Threading.QueueOnMainThread(delegate () {
                 UnityEngine.TerrainData TerrainData = new UnityEngine.TerrainData();
                 TerrainData.heightmapResolution = TerrainDataHeightMapDetail;
                 TerrainData.baseMapResolution = TerrainDataHeightMapDetail;
@@ -654,7 +646,8 @@ namespace SE.Modules {
             });
         }
         public void RemoveTerrainEntity(ApplyBlock Block) {
-            Kernel.ThreadManager.QueueOnMainThread(delegate () {
+            Kernel.Threading.QueueOnMainThread(delegate () {
+                //if (Block.TerrainEntity == null) UnityEngine.Debug.Log("Block.TerrainEntity is null!!!!!");
                 UnityEngine.Object.Destroy(Block.TerrainEntity);
             });
         }
@@ -667,22 +660,14 @@ namespace SE.Modules {
                 PriorityQueue<ApplyBlock>
                     q = new PriorityQueue<ApplyBlock>(new KeyBigFirstApplyBlockComparer());
                 while (NeedAlive) {
-                    Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>[] TempArray;
-                    if (ApplyOperateList.Count != 0) {
-                        //UnityEngine.Debug.Log("Add");
-                        lock (ApplyOperateList) {
-                            TempArray = ApplyOperateList.ToArray();
-                            ApplyOperateList.Clear();
-                        }
-                        for (int i = 0; i < TempArray.Length; i++) {
-                            Group<bool, ManagedTerrain, Geometries.Point<long, long>[]> now = TempArray[i];
-                            if (now.First == OPERATOR_ADD)
-                                for (int j = 0; j < now.Third.Length; j++)
-                                    InsertPoint(now.Second.ApplyBlockRoot, ref now.Third[j]);
-                            else
-                                for (int j = 0; j < now.Third.Length; j++)
-                                    DeletePoint(now.Second.ApplyBlockRoot, ref now.Third[j]);
-                        }
+                    Group<bool, ManagedTerrain, Geometries.Point<long, long>[]> temp;
+                    while (ApplyOperateQueue.Dequeue(out temp)) {
+                        if (temp.First == OPERATOR_ADD)
+                            for (int j = 0; j < temp.Third.Length; j++)
+                                InsertPoint(temp.Second.ApplyBlockRoot, ref temp.Third[j]);
+                        else
+                            for (int j = 0; j < temp.Third.Length; j++)
+                                DeletePoint(temp.Second.ApplyBlockRoot, ref temp.Third[j]);
                     }
 
                     if (tApplySceneCenter != null) {
