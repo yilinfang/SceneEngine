@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Generic.LockFree;
 
-namespace SE.Modules {
-    public class ObjectManager : IObjectManager {
+namespace SE.ObjectManagers {
+    public partial class ObjectManager : IObjectManager {
         public class Settings {
             //The max task amount limit per loop for object calculating (anti-block)
             public int LoopTaskMaxLimit = 200;
@@ -17,7 +17,7 @@ namespace SE.Modules {
             OPERATOR_REMOVE = false;
 
         private Settings _Settings;
-        private ObjectUpdateManager ObjectUpdateManager;
+        private ObjectUpdateManager _ObjectUpdateManager;
         private SceneCenter SceneCenter, tSceneCenter;
         private SBTree<Object> RecycleHeap, CalculateHeap;
         private LockFreeQueue<Pair<bool, Object>> OperateQueue;
@@ -42,12 +42,12 @@ namespace SE.Modules {
             ObjectIndex = 0;
         }
         public void AssignObjectUpdateManager(ObjectUpdateManager tObjectUpdateManager) {
-            ObjectUpdateManager = tObjectUpdateManager;
+            _ObjectUpdateManager = tObjectUpdateManager;
         }
         public void _Assigned(Kernel tKernel) {
             Kernel = tKernel;
             SceneCenter = new SceneCenter(Kernel, new LongVector3(0, 0, 0));
-            ObjectUpdateManager._Assigned(Kernel);
+            _ObjectUpdateManager._Assigned(Kernel);
         }
         public void _Start() {
             lock (ThreadControlLock)
@@ -56,24 +56,24 @@ namespace SE.Modules {
                 } else {
                     NeedAlive = true;
                     Kernel.Threading.Async(CalculateThread);
-                    ObjectUpdateManager._Start();
+                    _ObjectUpdateManager._Start();
                 }
         }
         public void _ChangeSceneCenter(ref LongVector3 Position) {
-            ObjectUpdateManager._ChangeSceneCenter(ref Position);
+            _ObjectUpdateManager._ChangeSceneCenter(ref Position);
             if (tSceneCenter == null)
                 tSceneCenter = new SceneCenter(Kernel, ref Position);
             else
                 tSceneCenter.Change(ref Position);
         }
         public void _ChangeCoordinateOrigin(ref LongVector3 Position) {
-            ObjectUpdateManager._ChangeCoordinateOrigin(ref Position);
+            _ObjectUpdateManager._ChangeCoordinateOrigin(ref Position);
         }
         public void _Stop() {
             lock (ThreadControlLock) {
                 if (NeedAlive) {
                     NeedAlive = false;
-                    ObjectUpdateManager._Stop();
+                    _ObjectUpdateManager._Stop();
                 } else {
                     throw new System.Exception("Object Manager : Thread is already stopped.");
                 }
@@ -87,7 +87,7 @@ namespace SE.Modules {
             Child.Start();
 
             if (Child.NeedUpdate)
-                ObjectUpdateManager.Regist(Child);
+                _ObjectUpdateManager.Regist(Child);
             if (Child.Lod != null) {
                 Kernel.Threading.QueueOnMainThread(delegate () {
                     Child.UnityRoot = new UnityEngine.GameObject("Kernel_" + Child.KernelID);
@@ -108,7 +108,7 @@ namespace SE.Modules {
         public void _Unregist(Object OldObject) {
             OldObject.Destory();
             if (OldObject.NeedUpdate)
-                ObjectUpdateManager.Unregist(OldObject);
+                _ObjectUpdateManager.Unregist(OldObject);
             if (OldObject.Lod != null)
                 OperateQueue.Enqueue(new Pair<bool, Object>(OPERATOR_REMOVE, OldObject));
         }

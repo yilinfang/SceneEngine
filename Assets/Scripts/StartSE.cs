@@ -13,10 +13,14 @@ public class StartSE : MonoBehaviour {
     void Start() {
 
         SEKernel = new SE.Kernel(new SE.Kernel.Settings());
-        SE.Modules.ObjectManager om = new SE.Modules.ObjectManager(new SE.Modules.ObjectManager.Settings());
-        om.AssignObjectUpdateManager(new SE.Modules.ObjectUpdateManager(new SE.Modules.ObjectUpdateManager.Settings()));
+        SE.ObjectManagers.ObjectManager
+            om = new SE.ObjectManagers.ObjectManager(new SE.ObjectManagers.ObjectManager.Settings());
+        SE.ObjectManagers.ObjectManager.ObjectUpdateManager
+            oum = new SE.ObjectManagers.ObjectManager.ObjectUpdateManager(new SE.ObjectManagers.ObjectManager.ObjectUpdateManager.Settings());
+        om.AssignObjectUpdateManager(oum);
         SEKernel.AssignObjectManager(om);
-        SE.Modules.TerrainManager tm = new SE.Modules.TerrainManager(new SE.Modules.TerrainManager.Settings());
+        SE.Modules.TerrainManager
+            tm = new SE.Modules.TerrainManager(new SE.Modules.TerrainManager.Settings());
         SEKernel.AssignModules(new SE.IModule[1] { tm, });
         SEKernel.Start();
 

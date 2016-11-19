@@ -3,26 +3,6 @@ using System.Collections.Generic.LockFree;
 
 namespace SE.Modules {
     public partial class TerrainManager : IModule {
-        private class KernelIDSmallFirstManagedTerrainComparer : IComparer<ManagedTerrain> {
-            public int Compare(ManagedTerrain a, ManagedTerrain b) {
-                return (a.KernelID == b.KernelID) ? 0 : ((a.KernelID > b.KernelID) ? 1 : -1);
-            }
-        }
-        private class KeyBigFirstCalculateNodeComparer : IComparer<CalculateNode> {
-            public int Compare(CalculateNode a, CalculateNode b) {
-                return (a.Key == b.Key) ? 0 : ((a.Key > b.Key) ? 1 : -1);
-            }
-        }
-        private class PositionSmallFirstTerrainBlockPointComparer : IComparer<Geometries.Point<long, long>> {
-            public int Compare(Geometries.Point<long, long> a, Geometries.Point<long, long> b) {
-                return (a.x == b.x && a.y == b.y) ? 0 : ((a.x > b.x || (a.x == b.x && a.y > b.y)) ? 1 : -1);
-            }
-        }
-        private class KeyBigFirstApplyBlockComparer : IComparer<ApplyBlock> {
-            public int Compare(ApplyBlock a, ApplyBlock b) {
-                return (a.Key == b.Key) ? 0 : ((a.Key < b.Key) ? 1 : -1);
-            }
-        }
         public class Settings {
             //The max precision limit of terrain unit calculating
             public float UnitPrecisionMinLimit = 0.05F;
@@ -69,7 +49,7 @@ namespace SE.Modules {
             _Settings = Settings;
             CalculateOperateQueue = new LockFreeQueue<Pair<bool, ManagedTerrain>>();
             ApplyOperateQueue = new LockFreeQueue<Group<bool, ManagedTerrain, Geometries.Point<long, long>[]>>();
-            ManagedTerrains = new SBTree<ManagedTerrain>(new KernelIDSmallFirstManagedTerrainComparer());
+            ManagedTerrains = new SBTree<ManagedTerrain>(new Comparers.KernelIDSmallFirstManagedTerrainComparer());
             CalculateSceneCenter = null;
             ApplySceneCenter = null;
             tCalculateSceneCenter = null;
@@ -403,7 +383,7 @@ namespace SE.Modules {
                 UnityEngine.Debug.Log("TerrainManager CalculateThread Start.");
 
                 PriorityQueue<CalculateNode>
-                    q = new PriorityQueue<CalculateNode>(new KeyBigFirstCalculateNodeComparer());
+                    q = new PriorityQueue<CalculateNode>(new Comparers.KeyBigFirstCalculateNodeComparer());
                 while (NeedAlive) {
                     Pair<bool, ManagedTerrain> temp;
                     while (CalculateOperateQueue.Dequeue(out temp)) {
@@ -659,7 +639,7 @@ namespace SE.Modules {
                 UnityEngine.Debug.Log("TerrainManager ApplyThread Start.");
 
                 PriorityQueue<ApplyBlock>
-                    q = new PriorityQueue<ApplyBlock>(new KeyBigFirstApplyBlockComparer());
+                    q = new PriorityQueue<ApplyBlock>(new Comparers.KeyBigFirstApplyBlockComparer());
                 while (NeedAlive) {
                     Group<bool, ManagedTerrain, Geometries.Point<long, long>[]> temp;
                     while (ApplyOperateQueue.Dequeue(out temp)) {
